@@ -4,10 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import register_exception_handlers
+from app.core.logging import register_request_logging, setup_logging
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    setup_logging(settings.log_level)
     app = FastAPI(title=settings.app_name)
     app.add_middleware(
         CORSMiddleware,
@@ -15,6 +17,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    register_request_logging(app)
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.api_prefix)
     return app
