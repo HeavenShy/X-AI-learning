@@ -8,7 +8,7 @@ import Taro from '@tarojs/taro'
 import { API_BASE } from './request'
 
 export const DISPLAY_FONT = 'ZCOOL QingKe HuangYou'
-export const FONT_URL = process.env.TARO_APP_FONT_URL || `${API_BASE}/static/fonts/zcool-qingke-huangyou-gb1.woff`
+export const FONT_URL = `${API_BASE}/static/fonts/zcool-qingke-huangyou-gb1.woff`
 
 let ready: Promise<boolean> | null = null
 

@@ -23,7 +23,8 @@ export function navMetrics(): Metrics {
   try {
     const win = Taro.getWindowInfo()
     statusBar = win.statusBarHeight || 0
-    const menu = Taro.getMenuButtonBoundingClientRect?.()
+    // 胶囊按钮只有小程序有；H5 上该 API 是 temporarilyNotSupport，会产生未处理的 rejection
+    const menu = process.env.TARO_ENV === 'weapp' ? Taro.getMenuButtonBoundingClientRect() : null
     if (menu && menu.height) {
       navHeight = (menu.top - statusBar) * 2 + menu.height
       sidePadding = win.windowWidth - menu.left + 8

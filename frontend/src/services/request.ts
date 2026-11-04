@@ -2,7 +2,22 @@ import Taro from '@tarojs/taro'
 
 import { ErrorCode, type ApiEnvelope } from '../types/api'
 
-export const API_BASE = (process.env.TARO_APP_API_BASE || 'http://127.0.0.1:8000').replace(/\/$/, '')
+/**
+ * 构建时由 Taro（webpack DefinePlugin）把 process.env.TARO_APP_API_BASE 替换成 .env 里的值。
+ * 小程序 / H5 运行时没有 process：万一变量没配置、表达式没被替换，会抛 ReferenceError，这里兜底。
+ * 注意不能用 typeof process 判断——它不会被替换，运行时恒为 'undefined'。
+ */
+function readApiBase(): string {
+  try {
+    const v = process.env.TARO_APP_API_BASE
+    if (v) return v
+  } catch {
+    // 变量未配置
+  }
+  return 'http://127.0.0.1:8000'
+}
+
+export const API_BASE = readApiBase().replace(/\/$/, '')
 
 export class ApiError extends Error {
   constructor(
