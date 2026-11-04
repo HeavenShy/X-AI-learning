@@ -1,0 +1,153 @@
+/* 出题中 / 出题失败（原型 01-core-flow.html「出题中 / 失败」） */
+.gen {
+  .gen-quote {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .gen-quote-b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .gen-h {
+    display: block;
+    font: 400 30px/1.25 var(--display);
+    margin-top: 22px;
+  }
+  .steps {
+    margin-top: 14px;
+  }
+  .step {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 12px;
+  }
+  .step + .step {
+    margin-top: 8px;
+  }
+  .step .n {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 2.5px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 22px/1 var(--display);
+  }
+  .step-t {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0 12px;
+    min-width: 0;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .step-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .step .st {
+    font: 400 16px/1 var(--display);
+  }
+  .step.done .n {
+    background: var(--green);
+    color: #fff;
+  }
+  .step.done .st {
+    color: var(--green);
+  }
+  .step.doing {
+    background: var(--halftone), var(--paper);
+  }
+  .step.doing .n {
+    background: var(--yellow);
+  }
+  .step.wait {
+    border-color: #a8aeb5;
+    color: #8a929b;
+  }
+  .step.wait .n {
+    border-color: #a8aeb5;
+  }
+  .step.wait .step-sub {
+    color: #8a929b;
+  }
+  .bar-run {
+    width: 100%;
+    margin-top: 12px;
+    height: 10px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    overflow: hidden;
+  }
+  .bar-run-i {
+    height: 100%;
+    width: 55%;
+    background: var(--yellow);
+    border-right: 2px solid var(--ink);
+    animation: run 2.4s ease-in-out infinite alternate;
+  }
+  @keyframes run {
+    from {
+      width: 30%;
+    }
+    to {
+      width: 80%;
+    }
+  }
+  .gen-tip {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+  .gen-foot {
+    margin-top: auto;
+    padding: 14px 4px 16px 0;
+  }
+  .fail-pn {
+    margin-top: 26px;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    padding: 18px 16px;
+  }
+  .fail-h {
+    display: block;
+    font: 400 32px/1.2 var(--display);
+  }
+  .fail-p {
+    display: block;
+    font-size: 14.5px;
+    line-height: 1.7;
+    margin-top: 8px;
+  }
+  .fail-ul {
+    margin: 8px 0 0 18px;
+  }
+  .fail-li {
+    display: list-item;
+    list-style: disc;
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .fail-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 4px 16px 0;
+  }
+  .mt14 {
+    margin-top: 14px;
+  }
+}

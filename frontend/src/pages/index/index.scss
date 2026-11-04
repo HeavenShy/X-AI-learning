@@ -1,0 +1,177 @@
+/* 首页（原型 01-core-flow.html「首页」） */
+.home {
+  .home-stats {
+    display: flex;
+    margin-bottom: 12px;
+    .chip-stat {
+      margin-left: 8px;
+    }
+  }
+  .panel-in {
+    position: relative;
+    display: block;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    padding: 16px 14px 10px;
+    margin-top: 22px;
+    .balloon {
+      position: absolute;
+      left: 12px;
+      top: -30px;
+    }
+  }
+  .panel-in.is-focus {
+    box-shadow: 0 0 0 3px var(--blue);
+  }
+  .panel-in.is-error {
+    border-color: var(--red);
+  }
+  .panel-textarea {
+    display: block;
+    width: 100%;
+    height: 150px;
+    margin-top: 22px;
+    font-size: 16px;
+    line-height: 1.7;
+    font-family: var(--body);
+    color: var(--ink);
+    background: transparent;
+  }
+  .panel-placeholder {
+    color: #8a929b;
+  }
+  .in-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1.5px dashed var(--line);
+    padding-top: 8px;
+  }
+  .in-tools {
+    display: flex;
+  }
+  .in-tool {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 8px;
+    margin-right: 6px;
+    border: 1.5px solid var(--line);
+    font-size: 12.5px;
+    color: #9aa1a9;
+    .icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 4px;
+    }
+  }
+  .in-count {
+    font-size: 12px;
+    color: #8a929b;
+  }
+  .in-err {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 8px;
+    font-size: 13.5px;
+    color: var(--red);
+    line-height: 1.5;
+    .icon {
+      width: 18px;
+      height: 18px;
+      margin: 1px 6px 0 0;
+    }
+  }
+  .len {
+    display: flex;
+    margin-top: 12px;
+  }
+  .len-btn {
+    flex: 1;
+    height: 46px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-size: 12.5px;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .len-btn + .len-btn {
+    margin-left: 8px;
+  }
+  .len-btn.is-on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .len-n {
+    display: block;
+    font: 400 17px/1.1 var(--display);
+  }
+  .tries {
+    margin-top: 14px;
+  }
+  .tries-title {
+    display: block;
+    font: 400 17px/1 var(--display);
+    margin-bottom: 8px;
+  }
+  .tries .row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .try {
+    height: 34px;
+    line-height: 30px;
+    padding: 0 12px;
+    margin: 0 8px 8px 0;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    font-size: 13.5px;
+  }
+  .try-pressed {
+    background: var(--yellow-soft);
+  }
+  .resume {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 9px 12px;
+  }
+  .r-ep {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    margin-right: 10px;
+    background: var(--halftone), var(--yellow);
+    border: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 16px/1 var(--display);
+  }
+  .r-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+  }
+  .r-title {
+    color: var(--ink);
+    font-size: 14.5px;
+  }
+  .r-go {
+    margin-left: 10px;
+    font: 400 17px/1 var(--display);
+  }
+  .home-cta {
+    margin-top: auto;
+    padding: 14px 4px 16px 0;
+  }
+}

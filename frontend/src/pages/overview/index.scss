@@ -1,0 +1,82 @@
+/* 本话目录（原型 01-core-flow.html「本话目录」） */
+.ov {
+  .ov-head {
+    background: var(--halftone), var(--yellow);
+    border: 3px solid var(--ink);
+    padding: 14px 14px 16px;
+  }
+  .ov-title {
+    display: block;
+    font: 400 36px/1.1 var(--display);
+  }
+  .ov-sum {
+    display: block;
+    font-size: 14px;
+    line-height: 1.65;
+    margin-top: 8px;
+  }
+  .meta {
+    display: flex;
+    margin-top: 10px;
+  }
+  .meta-i {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    font-size: 12.5px;
+    padding: 2px 8px;
+    margin-right: 8px;
+  }
+  .toc {
+    margin-top: 12px;
+  }
+  .toc-li {
+    display: flex;
+    align-items: center;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 8px 10px;
+  }
+  .toc-li + .toc-li {
+    margin-top: 6px;
+  }
+  .toc-li .n {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 19px/1 var(--display);
+  }
+  .toc-li .t {
+    flex: none;
+    width: 56px;
+    margin: 0 10px;
+    font: 400 14px/1 var(--display);
+    background: var(--ink);
+    color: #fff;
+    padding: 4px 0 3px;
+    text-align: center;
+  }
+  .toc-li .kp {
+    flex: 1;
+    font-size: 14px;
+  }
+  .ov-reward {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .ov-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 4px 16px 0;
+  }
+  .ov-link {
+    margin-top: 14px;
+  }
+}

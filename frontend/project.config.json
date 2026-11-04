@@ -2,9 +2,9 @@
   "miniprogramRoot": "dist/",
   "projectname": "frontend",
   "description": "AI 闯关学习小程序前端",
-  "appid": "wx1ead70e58525c9d8",
+  "appid": "wx036b4607377f970d",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "es6": false,
     "enhance": false,
     "compileHotReLoad": false,
@@ -33,5 +33,6 @@
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "isGameTourist": false
 }

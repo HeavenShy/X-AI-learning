@@ -1,0 +1,136 @@
+/* 分享海报（原型 01-core-flow.html「分享海报」） */
+.screen.poster-screen {
+  background: #3a3d42;
+  color: #fff;
+}
+.poster-screen {
+  .poster-content {
+    padding: 4px 26px 0;
+  }
+  .poster {
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    padding: 12px;
+    box-shadow: 6px 6px 0 #000;
+    transition: opacity 0.2s;
+  }
+  .poster.is-dim {
+    opacity: 0.55;
+  }
+  .p-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font: 400 18px/1 var(--display);
+  }
+  .p-ep {
+    font: 400 13px/1 var(--body);
+    color: var(--muted);
+  }
+  .p-hero {
+    position: relative;
+    margin-top: 10px;
+    height: 262px;
+    background: var(--halftone), var(--yellow);
+    border: 2.5px solid var(--ink);
+    overflow: hidden;
+    padding: 14px;
+  }
+  .p-h3 {
+    display: block;
+    white-space: pre-wrap;
+    font: 400 46px/1.05 var(--display);
+    -webkit-text-stroke: 1.5px var(--ink);
+    color: #fff;
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 var(--ink);
+  }
+  .p-balloon {
+    position: absolute;
+    left: 14px;
+    bottom: 24px;
+    max-width: 250px;
+    font-size: 19px;
+    line-height: 1.35;
+    padding: 12px 18px;
+  }
+  .p-balloon::after {
+    left: auto;
+    right: 40px;
+    bottom: -15px;
+  }
+  .p-stats {
+    display: flex;
+    margin-top: 8px;
+  }
+  .p-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid var(--ink);
+    padding: 6px 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .p-stat + .p-stat {
+    margin-left: 6px;
+  }
+  .p-stat-b {
+    font: 400 24px/1.1 var(--display);
+    color: var(--ink);
+  }
+  .p-qr {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    border-top: 2px dashed var(--line);
+    padding-top: 10px;
+  }
+  .p-sun {
+    position: relative;
+    flex: none;
+    width: 72px;
+    height: 72px;
+    margin-right: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p-sun-c {
+    font: 400 9px/1 var(--display);
+    color: var(--ink);
+  }
+  .p-qr-t {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .p-qr-b {
+    font: 400 18px/1.2 var(--display);
+    color: var(--ink);
+  }
+  .poster-actions {
+    flex: none;
+    display: flex;
+    margin-top: auto;
+    padding: 16px 16px 8px;
+  }
+  .poster-actions .btn {
+    font-size: 19px;
+    min-height: 48px;
+    width: auto;
+    flex: 1;
+  }
+  .pa-ghost {
+    margin-left: 10px;
+  }
+  .poster-canvas {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+  }
+}
