@@ -8,7 +8,6 @@ import { ScrollView, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useEffect, useRef, useState } from 'react'
 
-import { iconUri } from '../../assets/icons'
 import NavBar, { goBackOrHome } from '../../components/NavBar'
 import { Btn, Burst, CaptionBox, Cells, Dialog, SafeBottom, StatChip } from '../../components/ui'
 import { TYPE_LABEL } from '../../core/format'
@@ -26,7 +25,7 @@ const HINT: Record<Question['type'], string> = {
 }
 
 function Mark({ ok }: { ok: boolean }) {
-  return <View className='mark icon' style={{ backgroundImage: `url("${iconUri(ok ? 'markOk' : 'markNo')}")` }} />
+  return <View className={`mark icon ${ok ? 'icon-mark-ok' : 'icon-mark-no'}`} />
 }
 
 function AnsweredOptions({ q, r }: { q: Question; r: JudgeResult }) {

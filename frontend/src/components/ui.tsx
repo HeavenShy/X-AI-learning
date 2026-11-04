@@ -1,14 +1,15 @@
 /** 设计规范里的公共组件（00-style-board.html「核心组件」） */
 
 import { Text, View } from '@tarojs/components'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
-import { iconUri, type IconName } from '../assets/icons'
-import { burstSvg, svgUri } from '../core/graphics'
+import { iconClass } from '../assets/icon-class'
+import type { IconName } from '../assets/icons'
 import type { CellState } from '../core/session'
 
 export function Icon({ name, className = '' }: { name: IconName; className?: string }) {
-  return <View className={`icon ${className}`} style={{ backgroundImage: `url("${iconUri(name)}")` }} />
+  // 图标图片在 icons.generated.scss 里，避免内联 style 携带 base64
+  return <View className={`icon ${iconClass(name)} ${className}`} />
 }
 
 interface BtnProps {
@@ -102,10 +103,9 @@ export function CaptionBox({ defaultOpen, answerLine, explanation, knowledgePoin
 
 /** 拟声词爆炸框：“叮！”（proto.js data-burst="16,56,36"） */
 export function Burst({ text, className = '' }: { text: string; className?: string }) {
-  const uri = useMemo(() => svgUri(burstSvg(16, 56, 36, 120, 100)), [])
   return (
     <View className={`burst ${className}`}>
-      <View className='burst-bg icon' style={{ backgroundImage: `url("${uri}")` }} />
+      <View className='burst-bg icon img-burst' />
       <Text className='sfx'>{text}</Text>
     </View>
   )

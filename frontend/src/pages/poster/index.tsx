@@ -6,12 +6,11 @@
 
 import { Canvas, Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import NavBar from '../../components/NavBar'
 import { Btn, SafeBottom, Toast } from '../../components/ui'
 import { formatDuration } from '../../core/format'
-import { sunCodeSvg, svgUri } from '../../core/graphics'
 import { sessionStats } from '../../core/session'
 import { loadDisplayFont } from '../../services/font'
 import { drawPoster, POSTER_H, POSTER_W, type PosterData } from '../../services/poster'
@@ -47,7 +46,6 @@ export default function Poster() {
   const [toast, setToast] = useState(false)
   const [busy, setBusy] = useState(false)
   const imagePath = useRef<string | null>(null)
-  const sunUri = useMemo(() => svgUri(sunCodeSvg()), [])
 
   const quote = report?.status === 'done' && report.data ? report.data.share_quote : ''
 
@@ -143,7 +141,7 @@ export default function Poster() {
             </View>
           </View>
           <View className='p-qr'>
-            <View className='p-sun icon' style={{ backgroundImage: `url("${sunUri}")` }}>
+            <View className='p-sun icon img-sun-code'>
               <Text className='p-sun-c'>懂</Text>
             </View>
             <View className='p-qr-t'>

@@ -36,6 +36,7 @@
 | `npm run dev:h5` | H5 调试（http://localhost:10086），方便在浏览器里看效果 |
 | `npm test` | 纯逻辑单测（`node:test` + tsx）：判题、等级经验、会话、格式化、折行、图形 |
 | `npm run typecheck` | TypeScript 类型检查 |
+| `npm run gen:icons` | 修改 `src/assets/icons.ts` 后重新生成 `src/styles/icons.generated.scss`（单测会校验是否最新） |
 
 ## 目录
 
@@ -54,6 +55,6 @@ tests/          node:test 单测
 ## 实现说明
 
 - `designWidth: 375`：样式里的 px 与原型 1:1，构建时换算为 rpx。
-- 小程序不支持内联 SVG：图标、爆炸框、太阳码用 SVG data URI 作背景；判题打勾/打叉的“描线”动画用 `clip-path` 揭开实现，时序与原型一致。
+- 小程序不支持内联 SVG：图标、爆炸框、太阳码生成为 CSS 类（`icons.generated.scss`，base64 data URI 背景），不放在内联 style 里，避免每次 setData 传输大段 base64；判题打勾/打叉的“描线”动画用 `clip-path` 揭开实现，时序与原型一致。
 - 经验门槛：路人 0 / 龙套 150 / 配角 400 / 主角 1000 / 传说 2000；每答对一格 +10 经验、+5 金币，答错不扣。
 - 海报小程序码目前是太阳码占位图；接入真码需要后端用 AppSecret 调 `wxacode.getUnlimited`，并且小程序已发布。

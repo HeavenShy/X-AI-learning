@@ -1,6 +1,8 @@
-/** 图标（移植自 prototype/assets/proto.js 的 sprite）。小程序不支持内联 SVG，统一转成 data URI 作背景。 */
-
-import { svgUri } from '../core/graphics'
+/**
+ * 图标 SVG 源（移植自 prototype/assets/proto.js 的 sprite）。
+ * 小程序不支持内联 SVG；为避免内联 style 携带大段 base64（Taro 性能提示），
+ * 这里只是源数据，由 `npm run gen:icons` 生成 src/styles/icons.generated.scss，组件通过 CSS 类引用。
+ */
 
 const svg = (vb: string, body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${body}</svg>`
 const stroke = (color: string, width: number) =>
@@ -8,7 +10,7 @@ const stroke = (color: string, width: number) =>
 
 const GREY = '#9AA1A9'
 
-const RAW = {
+export const ICON_SVGS = {
   coin: svg(
     '0 0 24 24',
     '<circle cx="12" cy="12" r="10" fill="#FFD21F" stroke="#000" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="#000" stroke-width="1.5"/>'
@@ -42,11 +44,4 @@ const RAW = {
   markNo: svg('0 0 28 28', `<path d="M5 5 L23 23 M23 5 L5 23" ${stroke('#E5322D', 4.5)}/>`)
 }
 
-export type IconName = keyof typeof RAW
-
-const cache: Partial<Record<IconName, string>> = {}
-
-export function iconUri(name: IconName): string {
-  if (!cache[name]) cache[name] = svgUri(RAW[name])
-  return cache[name] as string
-}
+export type IconName = keyof typeof ICON_SVGS

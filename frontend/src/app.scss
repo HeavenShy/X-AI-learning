@@ -27,6 +27,9 @@
   --halftone: radial-gradient(circle, rgba(0, 0, 0, 0.22) 1.1px, transparent 1.5px) 0 0 / 6px 6px;
 }
 
+/* 图标 / 爆炸框 / 太阳码（由 npm run gen:icons 生成） */
+@import './styles/icons.generated';
+
 page {
   @include design-tokens;
 }
