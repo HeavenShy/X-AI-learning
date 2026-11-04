@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社交与会员</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+/* PK 大厅 */
+.rules{padding:14px}
+.rules h3{font:400 30px/1.15 var(--display)}
+.rules ul{list-style:none;margin-top:8px;font-size:13.5px;line-height:1.7}
+.rules li::before{content:"";display:inline-block;width:7px;height:7px;background:var(--ink);margin-right:8px;vertical-align:2px}
+.pick{list-style:none;display:flex;flex-direction:column;gap:8px}
+.pick li{display:flex;align-items:center;gap:12px;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px;font-size:14.5px}
+.pick li.on{background:var(--halftone),var(--paper)}
+.pick small{display:block;font-size:12px;color:var(--muted)}
+.pick .grow{flex:1}
+
+/* 微信聊天 */
+.wx{background:#EDEDED}
+.wx .navbar .title{font-weight:500}
+.wx-time{text-align:center;font-size:12px;color:#9A9A9A;margin:8px 0}
+.wx-row{display:flex;gap:8px;align-items:flex-start;margin-top:10px}
+.wx-row.me{flex-direction:row-reverse}
+.wx-av{flex:none;width:40px;height:40px;border-radius:4px;display:grid;place-items:center;font:400 18px/1 var(--display);border:1.5px solid var(--ink)}
+.wx-msg{max-width:230px;background:#fff;border-radius:6px;padding:9px 12px;font-size:15px;line-height:1.5}
+.wx-row.me .wx-msg{background:#95EC69}
+.mp-card{width:220px;background:#fff;border-radius:6px;padding:10px 12px 8px}
+.mp-card .h{display:flex;align-items:center;gap:6px;font-size:12px;color:#7A7A7A}
+.mp-card .h i{width:16px;height:16px;border-radius:50%;background:var(--yellow);border:1px solid #000;display:grid;place-items:center;font:400 10px/1 var(--display);font-style:normal;color:#000}
+.mp-card b{display:block;font-size:14.5px;font-weight:500;margin:6px 0 8px;line-height:1.4}
+.mp-cover{height:150px;background:var(--halftone),var(--yellow);border:2px solid #000;display:flex;align-items:center;justify-content:center;gap:10px}
+.mp-cover .avatar{width:46px;height:46px}
+.mp-cover span{font:400 40px/1 var(--display);-webkit-text-stroke:1.5px #000;color:#fff;paint-order:stroke fill;text-shadow:2px 2px 0 #000}
+.mp-card .f{font-size:11.5px;color:#9A9A9A;border-top:1px solid #EEE;margin-top:8px;padding-top:6px}
+.wx-input{flex:none;height:56px;background:#F7F7F7;border-top:1px solid #DDD;display:flex;align-items:center;gap:10px;padding:0 12px}
+.wx-input span{flex:1;height:38px;background:#fff;border-radius:4px}
+.wx-input i{width:28px;height:28px;border:1.5px solid #222;border-radius:50%}
+
+/* 准备 / 对战 */
+.vs{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.vs .pair{display:flex;align-items:center;gap:18px}
+.vs .who{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px}
+.vs .who .avatar{width:84px;height:84px;font-size:34px;border-width:3px}
+.vs .mid{font:400 64px/1 var(--display);color:var(--yellow);-webkit-text-stroke:2.5px var(--ink);paint-order:stroke fill;text-shadow:3px 3px 0 var(--ink);transform:rotate(-8deg)}
+.vs .topic{font:400 24px/1.2 var(--display)}
+.count{width:96px;height:96px;border:3px solid var(--ink);background:var(--paper);display:grid;place-items:center;font:400 60px/1 var(--display)}
+.score-bar{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px}
+.side{display:flex;align-items:center;gap:8px}
+.side.r{flex-direction:row-reverse;text-align:right}
+.side b{font:400 24px/1 var(--display)}
+.side small{display:block;font-size:11.5px;color:var(--muted)}
+.ring{position:relative;width:52px;height:52px}
+.ring svg{width:52px;height:52px;transform:rotate(-90deg)}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font:400 24px/1 var(--display)}
+.duel{display:flex;height:14px;border:2.5px solid var(--ink);margin-bottom:12px}
+.duel i{display:block;height:100%}
+.duel .a{background:var(--yellow);border-right:2.5px solid var(--ink)}
+.duel .b{background:#BFD6FF;flex:1}
+.q-meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:8px}
+.q-meta .done{color:var(--ink)}
+.x2-tag{background:var(--red);color:#fff;font:400 14px/1 var(--display);padding:5px 8px 4px;margin-left:6px}
+
+/* 结果 */
+.res{text-align:center}
+.res .sfx{font-size:80px;margin-top:20px}
+.res .final{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px}
+.res .final .who{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px}
+.res .final b{font:400 36px/1 var(--display)}
+.res .final .colon{font:400 30px/1 var(--display)}
+.cmp{list-style:none;margin-top:18px;background:var(--paper);border:2.5px solid var(--ink);text-align:left}
+.cmp li{display:grid;grid-template-columns:1fr 54px 54px;gap:6px;align-items:center;padding:7px 10px;border-top:1.5px solid #D5D9DE;font-size:13px}
+.cmp li:first-child{border-top:0;font-size:12px;color:var(--muted)}
+.cmp .c{text-align:center;font:400 16px/1 var(--display)}
+.cmp .c.no{color:var(--red)}
+
+/* 排行榜 */
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:6px;align-items:end;margin-top:4px}
+.podium div{background:var(--paper);border:2.5px solid var(--ink);text-align:center;padding:10px 4px 8px;font-size:12.5px}
+.podium div:nth-child(2){background:var(--halftone),var(--yellow);padding-top:16px}
+.podium .avatar{margin:0 auto 6px;width:44px;height:44px;font-size:18px}
+.podium b{display:block;font:400 24px/1 var(--display);margin-bottom:4px}
+.podium small{display:block;color:var(--muted);font-size:11.5px}
+.rank .n{width:26px;font:400 19px/1 var(--display);text-align:center}
+.rank .xp{font:400 17px/1 var(--display)}
+.me-rank{flex:none;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--ink);color:#fff;font-size:14px}
+.me-rank .n{font:400 20px/1 var(--display);color:var(--yellow)}
+.me-rank .grow{flex:1}
+.me-rank small{display:block;font-size:12px;color:#BFC4CA}
+
+/* 多模态 */
+.figure{margin-top:10px;background:var(--paper);border:2.5px solid var(--ink);padding:10px}
+.figure svg{display:block;width:100%;height:auto}
+.figure small{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;text-align:right}
+.audio{display:flex;align-items:center;gap:10px;background:var(--paper);border:2px solid var(--ink);padding:8px 10px;margin-top:8px}
+.audio .play{flex:none;width:34px;height:34px;background:var(--ink);color:var(--yellow);display:grid;place-items:center}
+.audio .play svg{width:16px;height:16px}
+.wave{flex:1;display:flex;align-items:center;gap:2px;height:28px}
+.wave i{flex:1;background:var(--ink);min-height:3px}
+.wave i.off{background:#C4C9CF}
+.audio .t{font:400 15px/1 var(--display)}
+.audio .sp{font-size:12px;border:1.5px solid var(--ink);padding:1px 5px}
+.voice-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:18px;text-align:center}
+.transcript{width:100%;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px;text-align:left;font-size:14.5px;line-height:1.6;margin-bottom:16px}
+.transcript small{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+.hold{width:120px;height:120px;border-radius:50%;background:var(--yellow);border:3px solid var(--ink);box-shadow:0 0 0 10px rgba(255,210,31,.35),0 0 0 20px rgba(255,210,31,.15);display:grid;place-items:center}
+.hold svg{width:44px;height:44px}
+.hold-t{font:400 18px/1 var(--display);margin-top:26px}
+.hold-s{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+/* 会员 */
+.vip-h{padding:14px;background:var(--ink);color:#fff;border:2.5px solid var(--ink)}
+.vip-h h3{font:400 30px/1.15 var(--display);color:var(--yellow)}
+.vip-h p{font-size:13px;color:#D5D9DE;margin-top:4px}
+.cmp-t{width:100%;border-collapse:collapse;background:var(--paper);border:2.5px solid var(--ink);font-size:12.5px;margin-top:10px}
+.cmp-t th,.cmp-t td{border-top:1.5px solid #D5D9DE;padding:6px 8px;text-align:left}
+.cmp-t thead th{border-top:0;font:400 15px/1 var(--display);padding:8px}
+.cmp-t thead th:last-child{background:var(--yellow)}
+.cmp-t td:last-child{background:var(--yellow-soft);font-weight:700}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.plans button{position:relative;background:var(--paper);border:2.5px solid var(--ink);padding:12px 4px 8px;text-align:center;font-size:12px;color:var(--muted)}
+.plans button b{display:block;font:400 26px/1 var(--display);color:var(--ink);margin:4px 0}
+.plans button em{display:block;font-style:normal;font-size:13px;color:var(--ink)}
+.plans button[aria-pressed="true"]{background:var(--halftone),var(--yellow);box-shadow:3px 3px 0 var(--ink)}
+.plans .flag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:11px;padding:1px 6px;white-space:nowrap}
+.packs{list-style:none;display:flex;flex-direction:column;gap:8px}
+.packs li{display:flex;align-items:center;gap:12px;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px}
+.packs li.on{background:var(--halftone),var(--paper)}
+.packs .grow{flex:1;font-size:14.5px}
+.packs small{display:block;font-size:12px;color:var(--muted)}
+.packs .price{font:400 22px/1 var(--display)}
+.over{display:flex;gap:10px;align-items:flex-start;background:var(--yellow-soft);border:2.5px solid var(--ink);padding:10px 12px;font-size:13.5px;line-height:1.6}
+.over svg{flex:none;width:18px;height:18px;margin-top:3px}
+.b2b{display:flex;align-items:center;gap:12px}
+.b2b .grow{flex:1;font-size:13px;color:var(--muted)}
+.b2b b{display:block;font:400 18px/1.2 var(--display);color:var(--ink)}
+.b2b button{border:2px solid var(--ink);background:var(--paper);padding:6px 10px;font-size:13px}
+.paid{text-align:center}
+.paid .okc{width:84px;height:84px;margin:40px auto 0}
+.paid h3{font:400 36px/1.2 var(--display);margin-top:16px}
+.paid p{font-size:14px;color:var(--muted);margin-top:4px}
+.paid .list{text-align:left;margin-top:22px}
+</style>
+</head>
+<body>
+<main class="proto">
+  <header class="proto-head">
+    <h1>社交与会员</h1>
+    <p>P2–P3 高级玩法：好友 PK 和领域排行榜，配图题和语音，以及会员、按量付费和企业定制。共 12 屏，都是在 01–03 的基础上加的功能。</p>
+    <nav class="proto-nav" data-cur="04" aria-label="原型文件"></nav>
+  </header>
+
+  <!-- ================= 一、好友 PK 与排行榜 ================= -->
+  <section class="flow" aria-labelledby="f1">
+    <h2 id="f1">一、好友 PK 与排行榜</h2>
+    <p>两人同一套题，每题 10 秒，答得又对又快分越高，最后一题双倍。靠微信分享卡拉人，是主要的裂变入口。</p>
+    <div class="screens">
+
+      <!-- 1 PK 大厅 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">好友 PK</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card hl rules">
+              <h3>找个朋友，比比谁更懂</h3>
+              <ul>
+                <li>同一套题，5 道，每题限时 10 秒</li>
+                <li>答对得分，越快分越高，最多 200 分</li>
+                <li>最后一题分数翻倍</li>
+              </ul>
+            </div>
+            <p class="sec-t">比什么</p>
+            <ul class="pick">
+              <li class="on"><span class="radio on"></span><span class="grow">RAG 入门<small>你今天学过，正确率 80%</small></span></li>
+              <li><span class="radio"></span><span class="grow">复利入门<small>你昨天学过</small></span></li>
+              <li><span class="radio"></span><span class="grow">换个新主题<small>输入一句话，现场出题</small></span></li>
+            </ul>
+          </div>
+          <div class="foot"><button class="btn btn-primary"><svg class="i"><use href="#i-share"/></svg>邀请微信好友</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>PK 大厅</b><p>入口在本话完结页和首页。默认选刚学过的主题，自己更有把握，也更愿意发出邀请。</p></div>
+      </div>
+
+      <!-- 2 分享卡 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen wx">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">陈一一</span></div>
+          <div class="content">
+            <p class="wx-time">21:42</p>
+            <div class="wx-row me"><span class="wx-av avatar">林</span><span class="wx-msg">来比一把，看谁更懂 RAG</span></div>
+            <div class="wx-row me">
+              <span class="wx-av avatar">林</span>
+              <div class="mp-card">
+                <div class="h"><i>懂</i>一话一懂</div>
+                <b>林小满邀你 PK：RAG 入门，5 道题，敢来吗？</b>
+                <div class="mp-cover"><span class="avatar">林</span><span>VS</span><span class="avatar b">?</span></div>
+                <div class="f">小程序</div>
+              </div>
+            </div>
+            <div class="wx-row"><span class="wx-av avatar b">陈</span><span class="wx-msg">来就来</span></div>
+          </div>
+          <div class="wx-input"><i></i><span></span><i></i></div>
+          <div class="home-ind" style="background:#F7F7F7"></div>
+        </div></div>
+        <div class="cap"><b>微信分享卡</b><p>这是好友在微信里看到的样子。卡片标题用发起人的名字加挑战语气，封面是 VS 对阵图。好友点开直接进入准备页，未登录时先授权。</p></div>
+      </div>
+
+      <!-- 3 准备 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="离开"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="vs">
+              <p class="topic">RAG 入门</p>
+              <div class="pair">
+                <span class="who"><span class="avatar">林</span>林小满</span>
+                <span class="mid">VS</span>
+                <span class="who"><span class="avatar b">陈</span>陈一一</span>
+              </div>
+              <p class="page-sub">陈一一已加入，马上开始</p>
+              <span class="count">3</span>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>准备开始</b><p>双方都进入后倒数 3 秒。好友 5 分钟内没来，提示“对方还没来”，可以再发一次邀请，或改成和 AI 陪练对战。</p></div>
+      </div>
+
+      <!-- 4 对战中 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="认输离开"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="score-bar">
+              <div class="side"><span class="avatar sm">林</span><span><b>520</b><small>林小满</small></span></div>
+              <div class="ring" aria-label="剩余 7 秒"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="22" fill="#fff" stroke="#D5D9DE" stroke-width="6"/><circle cx="26" cy="26" r="22" fill="none" stroke="#000" stroke-width="6" stroke-dasharray="138" stroke-dashoffset="41"/></svg><span>7</span></div>
+              <div class="side r"><span class="avatar sm b">陈</span><span><b>480</b><small>陈一一</small></span></div>
+            </div>
+            <div class="duel"><i class="a" style="width:52%"></i><i class="b"></i></div>
+            <div class="q-panel">
+              <span class="tag">第 5 题</span><span class="x2-tag">分数翻倍</span>
+              <h4>RAG 和传统搜索引擎最大的区别是？</h4>
+            </div>
+            <div class="opts">
+              <button class="opt"><span class="key">A</span>RAG 不需要任何资料</button>
+              <button class="opt"><span class="key">B</span>RAG 会把查到的内容组织成直接回答</button>
+              <button class="opt"><span class="key">C</span>搜索引擎不能检索网页</button>
+              <button class="opt"><span class="key">D</span>两者没有区别</button>
+            </div>
+            <div class="q-meta"><span>你还没作答</span><span class="done">陈一一已作答</span></div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>对战中</b><p>顶部是双方分数和倒计时，中间的对比条一眼看出谁领先。只显示对方“已作答”，不显示对方选了什么。双方答完后，两人的选择和讲解一起出现。</p></div>
+      </div>
+
+      <!-- 5 结果 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen" style="background:var(--paper)">
+          <div class="statusbar"></div>
+          <div class="navbar"><div class="capsule"></div></div>
+          <div class="content res">
+            <span class="sfx is-red">险胜！</span>
+            <div class="final">
+              <span class="who"><span class="avatar">林</span>林小满</span>
+              <b>880</b><span class="colon">:</span><b>800</b>
+              <span class="who"><span class="avatar b">陈</span>陈一一</span>
+            </div>
+            <ul class="cmp">
+              <li><span>题目</span><span class="c" style="font:12px var(--body)">你</span><span class="c" style="font:12px var(--body)">对方</span></li>
+              <li><span>1. RAG 的定义</span><span class="c">180</span><span class="c">150</span></li>
+              <li><span>2. 和训练的关系</span><span class="c">160</span><span class="c no">0</span></li>
+              <li><span>3. 优势与边界</span><span class="c no">0</span><span class="c">170</span></li>
+              <li><span>4. 检索与生成</span><span class="c">180</span><span class="c">160</span></li>
+              <li><span>5. 和搜索的区别（双倍）</span><span class="c">360</span><span class="c">320</span></li>
+            </ul>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">看讲解</button><button class="btn btn-primary" style="flex:1.4">再来一局</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>对战结果</b><p>按分差选拟声词：大胜、险胜、惜败、平局。逐题对比让人知道输在哪。输掉的题自动进错题本。PK 只计经验，不涉及金币输赢。</p></div>
+      </div>
+
+      <!-- 6 排行榜 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">排行榜</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="tabs" role="tablist"><button role="tab" aria-selected="true">AI 技术</button><button role="tab" aria-selected="false">理财</button><button role="tab" aria-selected="false">生活常识</button><button role="tab" aria-selected="false">好友</button></div>
+            <div class="podium">
+              <div><span class="avatar b">周</span><b>2</b>周可<small>1860 经验</small></div>
+              <div><span class="avatar p">夏</span><b>1</b>夏至<small>2240 经验</small></div>
+              <div><span class="avatar">吴</span><b>3</b>吴老师<small>1710 经验</small></div>
+            </div>
+            <ul class="list rank mt12">
+              <li><span class="n">4</span><span class="avatar sm b">赵</span><span class="grow">赵一鸣</span><span class="xp">1520</span></li>
+              <li><span class="n">5</span><span class="avatar sm p">孙</span><span class="grow">孙小雨</span><span class="xp">1490</span></li>
+              <li><span class="n">6</span><span class="avatar sm">何</span><span class="grow">何以</span><span class="xp">1355</span></li>
+              <li><span class="n">7</span><span class="avatar sm b">郑</span><span class="grow">郑重</span><span class="xp">1300</span></li>
+            </ul>
+            <p class="page-sub mt8">按本周在这个领域拿到的经验排名，每周一 0 点重置。</p>
+          </div>
+          <div class="me-rank"><span class="n">128</span><span class="avatar sm">林</span><span class="grow">我<small>再拿 60 经验进前 100</small></span><span>410</span></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>领域排行榜</b><p>按知识领域分榜，避免“全服第一”这种遥不可及的目标。底部固定显示自己的名次和离下一个目标还差多少。“好友”榜只看微信好友。</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 二、多模态 ================= -->
+  <section class="flow" aria-labelledby="f2">
+    <h2 id="f2">二、配图与语音</h2>
+    <p>前期只做文本，P2 再加：AI 给题目配示意图，讲解可以听，也可以用说的答题，适合通勤时不方便看屏幕。</p>
+    <div class="screens">
+
+      <!-- 7 配图题 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="退出闯关"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="q-top"><span class="q-l"><span class="cells"><i class="ok"></i><i class="now"></i><i></i><i></i><i></i></span><span class="chip-stat"><svg><use href="#xp"/></svg>10</span></span><span class="ep">第 2 格</span></div>
+            <div class="q-panel">
+              <span class="tag">看图题</span>
+              <h4>2. 下图是 RAG 的工作流程，哪一步是“检索”？</h4>
+              <div class="figure">
+                <svg viewBox="0 0 300 110" role="img" aria-label="流程图：①用户提问，②到资料库查找，③大模型写回答">
+                  <g font-family="ZCOOL QingKe HuangYou, sans-serif" font-size="15" text-anchor="middle">
+                    <rect x="4" y="22" width="80" height="62" fill="#fff" stroke="#000" stroke-width="2.5"/>
+                    <text x="44" y="48">①</text><text x="44" y="70" font-size="13">用户提问</text>
+                    <rect x="110" y="22" width="80" height="62" fill="#FFF4C4" stroke="#000" stroke-width="2.5"/>
+                    <text x="150" y="48">②</text><text x="150" y="70" font-size="13">查资料库</text>
+                    <rect x="216" y="22" width="80" height="62" fill="#fff" stroke="#000" stroke-width="2.5"/>
+                    <text x="256" y="48">③</text><text x="256" y="70" font-size="13">模型回答</text>
+                  </g>
+                  <path d="M86 53h20 M100 47l6 6-6 6 M192 53h20 M206 47l6 6-6 6" fill="none" stroke="#000" stroke-width="2.5"/>
+                </svg>
+                <small>示意图由 AI 生成</small>
+              </div>
+            </div>
+            <div class="opts">
+              <button class="opt"><span class="key">A</span>第 ① 步</button>
+              <button class="opt"><span class="key">B</span>第 ② 步</button>
+              <button class="opt"><span class="key">C</span>第 ③ 步</button>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>看图题</b><p>适合流程、结构、对比类的知识点。图片放在题目格子里，统一用漫画线稿风格生成，并标注“由 AI 生成”。</p></div>
+      </div>
+
+      <!-- 8 听讲解 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="退出闯关"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="q-top"><span class="q-l"><span class="cells"><i class="ok"></i><i class="ok"></i><i class="no"></i><i></i><i></i></span><span class="chip-stat"><svg><use href="#xp"/></svg>20</span></span><span class="ep">第 3 格</span></div>
+            <div class="q-panel"><span class="tag">多选题</span><h4>3. 下面哪些是 RAG 相比纯大模型回答的优势？</h4></div>
+            <div class="opts">
+              <div class="opt is-missed"><span class="key">A</span>能用上最新的外部资料<span class="miss-tag">漏选</span></div>
+              <div class="opt is-wrong"><span class="key">B</span>回答从此完全不会出错<svg class="mark no" viewBox="0 0 28 28" aria-label="错误"><path d="M5 5 L23 23 M23 5 L5 23"/></svg></div>
+              <div class="opt is-right"><span class="key">C</span>回答可以追溯到出处<svg class="mark ok" viewBox="0 0 28 28" aria-label="正确"><path d="M4 15 L11 22 L25 5"/></svg></div>
+            </div>
+            <div class="after"><div class="caption-box">
+              <div class="cb-head"><b>讲解</b><button class="cb-toggle" aria-expanded="true">收起</button></div>
+              <div class="cb-body">
+                <div class="audio">
+                  <button class="play" aria-label="暂停"><svg viewBox="0 0 16 16"><path d="M4 3h3v10H4zM9 3h3v10H9z" fill="currentColor"/></svg></button>
+                  <span class="wave" aria-hidden="true"><i style="height:40%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:60%"></i><i style="height:35%"></i><i style="height:75%"></i><i style="height:50%"></i><i class="off" style="height:65%"></i><i class="off" style="height:40%"></i><i class="off" style="height:80%"></i><i class="off" style="height:45%"></i><i class="off" style="height:60%"></i><i class="off" style="height:30%"></i></span>
+                  <span class="t">0:18 / 0:42</span>
+                  <span class="sp">1.5×</span>
+                </div>
+                <p style="margin-top:8px">B 错在“完全”：RAG 能减少胡编，但查到的资料本身也可能有错。</p>
+              </div>
+            </div></div>
+            <div class="card mt12" style="display:flex;align-items:center;gap:12px;padding:10px 12px"><span style="flex:1;font-size:14px">答完自动播放讲解</span><button class="switch" role="switch" aria-checked="true" aria-label="答完自动播放讲解"></button></div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>听讲解</b><p>讲解框里多一条播放条，可以调倍速。打开“自动播放”后，答完一题就开始读，戴着耳机就能学完一话。</p></div>
+      </div>
+
+      <!-- 9 说答案 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="退出闯关"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="q-top"><span class="q-l"><span class="cells"><i class="ok"></i><i class="ok"></i><i class="no"></i><i class="now"></i><i></i></span><span class="chip-stat"><svg><use href="#xp"/></svg>20</span></span><span class="ep">第 4 格</span></div>
+            <div class="q-panel">
+              <span class="tag">说答案</span>
+              <h4>4. 用一句话说说：在 RAG 里，大模型负责做什么？</h4>
+            </div>
+            <div class="voice-area">
+              <div class="transcript"><small>正在听……</small>大模型负责把查到的资料整理一下，然后组织成</div>
+              <div class="hold"><svg><use href="#i-mic"/></svg></div>
+              <p class="hold-t">松开就提交</p>
+              <p class="hold-s">上滑取消。不方便说话时，点右上角切回选项。</p>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>说答案</b><p>按住说话、实时转文字，松开后由 AI 判断说得对不对、漏了什么，反馈仍用 01 的结果条和讲解框。这种题只出现在开启了语音模式的一话里。</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 三、会员与付费 ================= -->
+  <section class="flow" aria-labelledby="f3">
+    <h2 id="f3">三、会员与付费</h2>
+    <p>免费版足够跑通一句话出题；会员解锁不限次数、大文档、知识库额度和语音。超大文档按量付费，团队需求走企业定制。</p>
+    <div class="screens">
+
+      <!-- 10 会员中心 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">会员</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="vip-h"><h3>想学多少，就出多少</h3><p>开通后立即生效，所有设备通用。</p></div>
+            <table class="cmp-t">
+              <thead><tr><th>权益</th><th>免费</th><th>会员</th></tr></thead>
+              <tbody>
+                <tr><td>每天出题</td><td>3 话</td><td>不限</td></tr>
+                <tr><td>每话题量</td><td>最多 10 题</td><td>最多 50 题</td></tr>
+                <tr><td>文档、网页、视频</td><td>每月 3 次</td><td>不限</td></tr>
+                <tr><td>知识库</td><td>1 个，50 份</td><td>10 个，500 份</td></tr>
+                <tr><td>听讲解、说答案</td><td>不支持</td><td>支持</td></tr>
+                <tr><td>月度深度复盘</td><td>简版</td><td>完整版</td></tr>
+              </tbody>
+            </table>
+            <div class="plans" role="group" data-single>
+              <button aria-pressed="false">月卡<b>¥25</b><em>30 天</em></button>
+              <button aria-pressed="true"><span class="flag">最划算</span>年卡<b>¥168</b><em>合 ¥14 / 月</em></button>
+              <button aria-pressed="false">连续包月<b>¥18</b><em>每月自动续费</em></button>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">开通年卡 ¥168</button><p class="fine">开通即同意《会员服务协议》。连续包月可随时在微信支付中取消。</p></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>会员中心</b><p>用对比表讲清买了能多做什么，价格为占位。注意：iOS 上小程序售卖虚拟商品受微信规则限制，上线前需确认最新政策和可用的支付方式。</p></div>
+      </div>
+
+      <!-- 11 按量付费 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">解析超大文档</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card file" style="display:flex;align-items:center;gap:12px">
+              <span class="ico y"><svg><use href="#i-doc"/></svg></span>
+              <span style="flex:1;font-size:15px"><b style="display:block">注册会计师教材（财务）.pdf</b><small style="color:var(--muted);font-size:12.5px">18.4 MB，共 520 页</small></span>
+            </div>
+            <p class="over mt12"><svg><use href="#i-warn"/></svg>这份文档 520 页，超过会员单次 200 页的上限。可以只解析其中一部分，或者购买解析额度。</p>
+            <ul class="packs mt12">
+              <li><span class="radio"></span><span class="grow">只解析第 1–200 页<small>不额外收费</small></span><span class="price">免费</span></li>
+              <li class="on"><span class="radio on"></span><span class="grow">解析包 1000 页<small>一年内有效，可以分多次用</small></span><span class="price">¥30</span></li>
+              <li><span class="radio"></span><span class="grow">只买这一次<small>解析全部 520 页</small></span><span class="price">¥18</span></li>
+            </ul>
+            <div class="card mt12 b2b">
+              <span class="grow"><b>团队和企业</b>共享知识库、批量导入、导出考核成绩</span>
+              <button>联系我们</button>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">购买解析包 ¥30</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>按量付费与企业定制</b><p>超出额度时不直接拦住，而是先给免费的折中方案。企业需求只留一个联系入口，B2B 定制线下谈。</p></div>
+      </div>
+
+      <!-- 12 支付成功 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><span class="title">支付结果</span><div class="capsule"></div></div>
+          <div class="content paid">
+            <svg class="okc" viewBox="0 0 22 22" aria-hidden="true"><use href="#i-ok"/></svg>
+            <h3>会员已开通</h3>
+            <p>年卡，有效期到 2027 年 11 月 4 日</p>
+            <ul class="list">
+              <li><span class="ico y"><svg><use href="#i-plus"/></svg></span><span class="grow">每天出题不限次数</span></li>
+              <li><span class="ico y"><svg><use href="#i-doc"/></svg></span><span class="grow">文档、网页、视频出题不限次数</span></li>
+              <li><span class="ico y"><svg><use href="#i-sound"/></svg></span><span class="grow">听讲解、说答案</span></li>
+              <li><span class="ico y"><svg><use href="#i-folder"/></svg></span><span class="grow">知识库扩到 10 个、500 份</span></li>
+            </ul>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">查看订单</button><button class="btn btn-primary" style="flex:1.5">去出一话</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>支付成功</b><p>直接列出刚解锁的权益，按钮带用户马上用起来。支付失败时显示原因（如余额不足、已取消），并保留“重新支付”。</p></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+<script src="assets/proto.js"></script>
+</body>
+</html>

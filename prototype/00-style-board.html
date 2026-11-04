@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>设计风格样张 v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#000000;
+  --paper:#FFFFFF;
+  --tone:#EEF0F2;
+  --yellow:#FFD21F;
+  --yellow-soft:#FFF4C4;
+  --red:#E5322D;
+  --red-soft:#FFE6E3;
+  --green:#14A160;
+  --green-soft:#DDF5E8;
+  --blue:#1E6FE0;
+  --muted:#5E6670;
+  --desk:#E4E7EB;
+  --display:"ZCOOL QingKe HuangYou","Microsoft YaHei","PingFang SC",sans-serif;
+  --body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --halftone:radial-gradient(circle,rgba(0,0,0,.22) 1.1px,transparent 1.5px) 0 0/6px 6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--desk);color:var(--ink);font:16px/1.7 var(--body)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+
+.board-page{max-width:1280px;margin:0 auto;padding:56px 16px 96px}
+.intro{max-width:720px}
+.intro h1{font:400 46px/1.15 var(--display)}
+.intro p{margin-top:14px;color:var(--muted);font-size:17px}
+.block{margin-top:64px}
+.block > h2{font:400 30px/1.25 var(--display);margin-bottom:6px}
+.block > .lead{color:var(--muted);max-width:680px;margin-bottom:24px}
+
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.swatch{background:var(--paper);border:2.5px solid var(--ink)}
+.swatch .chip{height:84px;border-bottom:2.5px solid var(--ink)}
+.swatch .meta{padding:10px 12px 12px}
+.swatch b{display:block;font:400 20px/1.3 var(--display)}
+.swatch code{font:13px/1.4 Consolas,monospace;color:var(--muted)}
+.swatch span{display:block;font-size:13px;line-height:1.5;margin-top:4px}
+
+.type-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.type-card{background:var(--paper);border:2.5px solid var(--ink);padding:22px 24px}
+.type-card .name{font-size:13px;color:var(--muted)}
+.type-disp .s1{font:400 44px/1.2 var(--display);margin-top:8px}
+.type-disp .s2{font:400 24px/1.4 var(--display);margin-top:6px}
+.type-body .s1{font-weight:700;font-size:19px;line-height:1.5;margin-top:10px}
+.type-body .s2{font-size:16px;line-height:1.75;margin-top:6px;max-width:34em}
+.scale{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+
+.comps{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.comp{background:var(--paper);border:2.5px solid var(--ink);padding:18px 18px 20px}
+.comp > h3{font:400 21px/1.3 var(--display);margin-bottom:12px}
+.comp .stack{display:flex;flex-direction:column;gap:10px}
+.comp .note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6}
+.levels{display:flex;align-items:flex-end;gap:6px}
+.levels li{list-style:none;flex:1;text-align:center}
+.levels .bar{border:2px solid var(--ink);background:var(--halftone),var(--paper)}
+.levels li:nth-child(5) .bar{background:var(--yellow)}
+.levels b{display:block;font:400 18px/1.3 var(--display);margin-top:6px}
+.levels span{font-size:12px;color:var(--muted)}
+.sfx-row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+
+/* ---------- 组件 ---------- */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:0 20px;font:400 22px/1 var(--display);letter-spacing:.08em;border:3px solid var(--ink);border-radius:4px;transition:transform .08s,box-shadow .08s}
+.btn-primary{background:var(--yellow);box-shadow:4px 4px 0 var(--ink)}
+.btn-primary:active,.btn-primary.is-pressed{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.btn-ghost{background:var(--paper);box-shadow:4px 4px 0 var(--ink)}
+.btn-ghost:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.btn[disabled]{background:#EDEDED;color:#9A9A9A;border-color:#A8A8A8;box-shadow:none;cursor:not-allowed}
+
+.opt{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:9px 46px 9px 10px;text-align:left;background:var(--paper);border:2.5px solid var(--ink);font:15.5px/1.45 var(--body);position:relative}
+.opt .key{flex:none;width:28px;height:28px;border:2px solid var(--ink);display:grid;place-items:center;font:400 17px/1 var(--display)}
+.opt.is-picked{background:var(--halftone),var(--paper)}
+.opt.is-picked .key{background:var(--ink);color:#fff}
+.opt.is-right{background:var(--green-soft)}
+.opt.is-right .key{background:var(--green);border-color:var(--ink);color:#fff}
+.opt.is-wrong{background:var(--red-soft)}
+.opt.is-wrong .key{background:var(--red);color:#fff}
+.opt.is-missed{border-style:dashed;border-color:var(--green)}
+.opt.is-missed .key{border-color:var(--green);color:var(--green)}
+.opt .mark{position:absolute;right:10px;top:50%;width:28px;height:28px;margin-top:-14px;overflow:visible}
+.mark path{fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.mark.ok path{stroke:var(--green)}
+.mark.no path{stroke:var(--red)}
+.opt .miss-tag{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:400 16px/1 var(--display);color:var(--green)}
+
+/* 旁白框：漫画里的黄色叙述框，承载讲解 */
+.caption-box{background:var(--yellow-soft);border:2.5px solid var(--ink);padding:12px 14px 14px;position:relative}
+.caption-box .cb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.caption-box .cb-head b{font:400 19px/1.3 var(--display)}
+.caption-box .cb-toggle{font-size:13px;color:var(--muted);padding:4px 2px}
+.caption-box p{font-size:14px;line-height:1.75}
+.caption-box p + p{margin-top:6px}
+.caption-box .answer{font-weight:700}
+.caption-box .kp{display:inline-block;margin-top:8px;font-size:12.5px;border:1.5px solid var(--ink);background:var(--paper);padding:1px 8px}
+
+.balloon{position:relative;display:inline-block;background:var(--paper);border:2.5px solid var(--ink);border-radius:50% / 46%;padding:12px 22px;font:400 21px/1.3 var(--display)}
+.balloon::after{content:"";position:absolute;left:30px;bottom:-15px;width:18px;height:18px;background:var(--paper);border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:skewX(35deg) rotate(10deg)}
+
+.sfx{display:inline-block;font:400 54px/1 var(--display);color:var(--yellow);-webkit-text-stroke:2.5px var(--ink);paint-order:stroke fill;text-shadow:3px 3px 0 var(--ink);transform:rotate(-8deg)}
+.sfx.is-gloom{color:#fff}
+.sfx.is-red{color:var(--red)}
+.burst{position:relative;display:inline-grid;place-items:center;width:130px;height:110px}
+.burst svg{position:absolute;inset:0;width:100%;height:100%}
+.burst .sfx{position:relative;font-size:44px}
+
+.cells{display:flex;gap:4px}
+.cells i{width:22px;height:22px;border:2px solid var(--ink);background:var(--paper)}
+.cells i.ok{background:var(--green)}
+.cells i.no{background:var(--red)}
+.cells i.now{background:var(--yellow)}
+.chip-stat{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px 0 5px;background:var(--paper);border:2px solid var(--ink);font:400 16px/1 var(--display)}
+.chip-stat svg{width:18px;height:18px}
+
+/* ---------- 手机框 ---------- */
+.screens{display:grid;grid-template-columns:repeat(3,395px);justify-content:center;gap:48px 36px}
+.screen-item{display:flex;flex-direction:column;align-items:center}
+.phone{width:395px;height:832px;border:10px solid var(--ink);border-radius:52px;overflow:hidden;position:relative;background:var(--paper)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--tone)}
+.cap{width:375px;margin-top:16px}
+.cap b{font:400 22px/1.3 var(--display)}
+.cap p{font-size:14px;color:var(--muted);line-height:1.65;margin-top:4px}
+
+.statusbar{flex:none;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font:600 15px/1 var(--body)}
+.statusbar i{display:block;width:24px;height:11px;border:1.5px solid var(--ink);border-radius:3px;position:relative}
+.statusbar i::after{content:"";position:absolute;inset:1.5px 5px 1.5px 1.5px;background:var(--ink)}
+.navbar{flex:none;height:44px;position:relative;display:flex;align-items:center;padding:0 112px 0 16px}
+.navbar.is-center{justify-content:center;padding:0 112px}
+.navbar .title{font:600 17px/1 var(--body)}
+.navbar .back{position:absolute;left:10px;top:7px;width:30px;height:30px;display:grid;place-items:center}
+.navbar .brand{font:400 22px/1 var(--display)}
+.capsule{position:absolute;right:10px;top:6px;width:87px;height:32px;border:1px solid rgba(0,0,0,.18);border-radius:16px;background:rgba(255,255,255,.9);display:flex;align-items:center}
+.capsule::before{content:"•••";flex:1;text-align:center;font-size:12px;font-weight:700}
+.capsule::after{content:"";width:1px;height:18px;background:rgba(0,0,0,.18)}
+.capsule i{flex:1;display:grid;place-items:center}
+.capsule i::before{content:"";width:15px;height:15px;border:2px solid var(--ink);border-radius:50%;box-shadow:inset 0 0 0 2.5px #fff,inset 0 0 0 8px var(--ink)}
+.content{flex:1;min-height:0;overflow:hidden;padding:6px 16px 0;display:flex;flex-direction:column}
+.home-ind{flex:none;height:30px;display:grid;place-items:center;background:var(--paper)}
+.home-ind::before{content:"";width:134px;height:5px;border-radius:3px;background:var(--ink)}
+.tabbar{flex:none;height:58px;display:flex;border-top:2.5px solid var(--ink);background:var(--paper)}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:400 14px/1 var(--display);color:var(--muted);text-decoration:none}
+.tabbar a.is-on{color:var(--ink)}
+.tabbar svg{width:26px;height:26px}
+
+/* 屏1 首页 */
+.home-stats{display:flex;gap:8px;margin-bottom:12px}
+.lvchip{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 8px;background:var(--ink);color:var(--yellow);font:400 16px/1 var(--display)}
+.lvchip .xp{width:56px;height:8px;background:#444}
+.lvchip .xp i{display:block;height:100%;width:65%;background:var(--yellow)}
+.panel-in{position:relative;background:var(--paper);border:3px solid var(--ink);padding:16px 14px 10px;margin-top:22px}
+.panel-in .balloon{position:absolute;left:12px;top:-30px;font-size:20px;padding:8px 18px}
+.panel-in textarea{display:block;width:100%;height:150px;margin-top:22px;resize:none;border:0;background:transparent;font:16px/1.7 var(--body);color:var(--ink)}
+.panel-in textarea::placeholder{color:#8A929B}
+.panel-in textarea:focus{outline:none}
+.panel-in:focus-within{box-shadow:0 0 0 3px var(--blue)}
+.in-foot{display:flex;align-items:center;justify-content:space-between;border-top:1.5px dashed #B9BFC6;padding-top:8px}
+.in-tools{display:flex;gap:6px}
+.in-tools button{white-space:nowrap;display:flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:1.5px solid #B9BFC6;font-size:12.5px;color:#9AA1A9;cursor:not-allowed}
+.in-tools svg{width:14px;height:14px}
+.in-count{font-size:12px;color:#8A929B}
+.len{display:flex;gap:8px;margin-top:12px}
+.len button{flex:1;height:44px;border:2.5px solid var(--ink);background:var(--paper);font-size:13px;line-height:1.25}
+.len button b{display:block;font:400 16px/1.1 var(--display)}
+.len button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.resume{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--paper);border:2.5px solid var(--ink);padding:9px 12px}
+.resume .r-ep{flex:none;width:42px;height:42px;background:var(--halftone),var(--yellow);border:2px solid var(--ink);display:grid;place-items:center;font:400 15px/1 var(--display)}
+.resume div{flex:1;font-size:13px;line-height:1.45;color:var(--muted)}
+.resume div b{display:block;color:var(--ink);font-size:14.5px}
+.resume span{font:400 16px/1 var(--display)}
+.home-cta{margin-top:auto;padding:14px 4px 16px 0}
+
+/* 屏2 答错 */
+.q-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.q-top .ep{font:400 18px/1 var(--display)}
+.q-panel{position:relative;background:var(--paper);border:3px solid var(--ink);padding:12px 14px 14px}
+.q-panel .tag{display:inline-block;font:400 15px/1 var(--display);background:var(--ink);color:#fff;padding:5px 8px 4px}
+.q-panel h4{font-size:17px;line-height:1.55;font-weight:700;margin-top:8px}
+.q-panel .sfx-pop{position:absolute;right:-4px;top:-30px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.after{margin-top:12px}
+.result-bar{flex:none;background:var(--paper);border-top:3px solid var(--ink);padding:12px 16px 8px}
+.result-bar b{display:block;font:400 23px/1.25 var(--display)}
+.result-bar span{display:block;font-size:13.5px;color:var(--muted);margin:2px 0 10px}
+.replay{font-size:13px;color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+
+.anim .mark path{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .35s ease-out forwards}
+.anim .m1 path{animation-delay:.15s}
+.anim .m2 path{animation-delay:.5s}
+.anim .m3{opacity:0;animation:fadein .2s .85s forwards}
+.anim .sfx-pop{opacity:0;animation:pop .32s cubic-bezier(.3,1.6,.5,1) 1.05s forwards}
+.anim .result-bar{transform:translateY(100%);animation:up .3s ease-out 1.15s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fadein{to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:scale(1)}}
+@keyframes up{to{transform:translateY(0)}}
+
+/* 屏3 复盘报告：本话完结页 */
+.page{flex:1;min-height:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr 1fr;grid-auto-rows:min-content;gap:8px}
+.pn{background:var(--paper);border:2.5px solid var(--ink);padding:10px 10px 12px;position:relative}
+.pn.wide{grid-column:1 / -1}
+.pn.two{grid-column:span 2}
+.pn h5{font:400 17px/1.2 var(--display);margin-bottom:6px}
+.score-pn{display:flex;align-items:center;gap:14px;background:var(--halftone),var(--yellow)}
+.score-pn .num{font:400 68px/1 var(--display);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;color:#fff;text-shadow:3px 3px 0 var(--ink)}
+.score-pn .num small{font-size:24px}
+.score-pn .t{font-size:13px;line-height:1.65}
+.score-pn .t b{font:400 22px/1.2 var(--display);display:block}
+.strip{font-size:12.5px;line-height:1.55;min-height:96px}
+.strip em{display:block;font:400 15px/1 var(--display);font-style:normal;margin-bottom:4px;color:var(--muted)}
+.kps{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.kps li{list-style:none;display:grid;grid-template-columns:1fr 80px 38px;align-items:center;gap:8px}
+.kps .meter{height:12px;border:2px solid var(--ink);background:#fff}
+.kps .meter i{display:block;height:100%;background:var(--green)}
+.kps .weak .meter i{background:var(--red)}
+.kps .pct{font:400 16px/1 var(--display);text-align:right}
+.kps .weak .pct{color:var(--red)}
+.next{font-size:12.5px;line-height:1.6}
+.next li{margin-left:16px}
+.report-actions{flex:none;display:flex;gap:10px;padding:12px 16px 6px;background:var(--paper);border-top:3px solid var(--ink)}
+.report-actions .btn{font-size:19px;min-height:48px}
+.report-actions .btn-primary{flex:1.4}
+.report-actions .btn-ghost{flex:1}
+
+@media (max-width:1300px){.screens{grid-template-columns:repeat(2,395px)}}
+@media (max-width:880px){.screens{grid-template-columns:395px}.type-row{grid-template-columns:1fr}.intro h1{font-size:36px}}
+@media (max-width:430px){.phone{zoom:.84}.cap{width:100%}.screens{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .anim .mark path{stroke-dashoffset:0}
+  .anim .m3,.anim .sfx-pop{opacity:1}
+  .anim .result-bar{transform:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#FFD21F" stroke="#000" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="#000" stroke-width="1.5"/></symbol>
+  <symbol id="xp" viewBox="0 0 24 24"><path d="M13.5 2 L5 13.5 h6 L9.5 22 L19 10 h-6 Z" fill="#FFD21F" stroke="#000" stroke-width="2" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<main class="board-page">
+  <header class="intro">
+    <h1>设计风格样张 v2</h1>
+    <p>面向用碎片时间学东西的成年人。一次闯关就是看一话漫画：每道题是一格，讲解写在旁白框里，读完是一页“本话完结”。平时克制，只有答完题、通关、升级的那一下才用漫画的方式热闹。产品名暂用“一话一懂”占位。</p>
+  </header>
+
+  <section class="block" aria-labelledby="h-color">
+    <h2 id="h-color">色板</h2>
+    <p class="lead">来自漫画印刷：黑色墨线、白纸、网点灰，加上三种只表达状态的颜色。</p>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#000"></div><div class="meta"><b>墨线</b><code>#000000</code><span>描边、正文、选中</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#EEF0F2"></div><div class="meta"><b>网点灰</b><code>#EEF0F2 / 白格 #FFF</code><span>页面底色，格子是白纸</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#FFD21F"></div><div class="meta"><b>漫画黄</b><code>#FFD21F</code><span>主按钮、经验值、旁白框</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#14A160"></div><div class="meta"><b>答对绿</b><code>#14A160</code><span>正确、已掌握</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#E5322D"></div><div class="meta"><b>答错红</b><code>#E5322D</code><span>错误、薄弱点</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#1E6FE0"></div><div class="meta"><b>链接蓝</b><code>#1E6FE0</code><span>链接、焦点框</span></div></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-type">
+    <h2 id="h-type">字体</h2>
+    <p class="lead">漫画招牌式粗体负责“出声”，系统黑体负责“讲知识”。比上一版的手写体更成熟。</p>
+    <div class="type-row">
+      <div class="type-card type-disp">
+        <div class="name">站酷庆科黄油体：标题、按钮、拟声词、数字</div>
+        <div class="s1">下一话，想看懂什么？</div>
+        <div class="s2">懂了，下一格　本话完结　80 分</div>
+        <div class="scale"><span>拟声词 44–56</span><span>分数 68</span><span>标题 30</span><span>按钮 22</span></div>
+      </div>
+      <div class="type-card type-body">
+        <div class="name">系统黑体（苹方 / 微软雅黑）：题干、选项、讲解</div>
+        <div class="s1">3. 下面哪些是 RAG 相比纯大模型回答的优势？</div>
+        <div class="s2">RAG 回答前会先去资料库里检索相关内容，再把结果交给大模型组织语言。资料更新了，答案也能跟着更新。</div>
+        <div class="scale"><span>题干 17 粗</span><span>选项 15.5</span><span>讲解 14 / 行高 1.75</span><span>辅助 12.5</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-comp">
+    <h2 id="h-comp">核心组件</h2>
+    <p class="lead">格子是直角的，像漫画分镜。能按的东西才有右下墨影，按下去影子消失。</p>
+    <div class="comps">
+      <div class="comp"><h3>按钮</h3><div class="stack">
+        <button class="btn btn-primary">开始出题</button>
+        <button class="btn btn-primary is-pressed" tabindex="-1">按下状态</button>
+        <button class="btn btn-ghost">再闯一轮</button>
+        <button class="btn btn-primary" disabled>先写点内容</button>
+      </div></div>
+
+      <div class="comp"><h3>选项五态</h3><div class="stack">
+        <div class="opt"><span class="key">A</span>未选择</div>
+        <div class="opt is-picked"><span class="key">B</span>已选（多选待提交）</div>
+        <div class="opt is-right"><span class="key">C</span>选对了<svg class="mark ok" viewBox="0 0 28 28" aria-label="正确"><path pathLength="100" d="M4 15 L11 22 L25 5"/></svg></div>
+        <div class="opt is-wrong"><span class="key">D</span>选错了<svg class="mark no" viewBox="0 0 28 28" aria-label="错误"><path pathLength="100" d="M5 5 L23 23 M23 5 L5 23"/></svg></div>
+        <div class="opt is-missed"><span class="key">E</span>该选没选<span class="miss-tag">漏选</span></div>
+      </div></div>
+
+      <div class="comp"><h3>旁白框：知识讲解</h3>
+        <div class="caption-box">
+          <div class="cb-head"><b>讲解</b><button class="cb-toggle" aria-expanded="true">收起</button></div>
+          <p class="answer">正确答案：A、C</p>
+          <p>RAG 会先检索资料再回答，所以资料一更新，答案也能更新。</p>
+          <span class="kp">知识点：RAG 的优势与边界</span>
+        </div>
+        <p class="note">答对默认收起，答错默认展开。</p>
+      </div>
+
+      <div class="comp"><h3>拟声词：只在结果出来时出现</h3>
+        <div class="sfx-row">
+          <span class="burst"><svg viewBox="0 0 130 110" aria-hidden="true" data-burst="16,62,40"></svg><span class="sfx">叮！</span></span>
+          <span class="sfx is-gloom">嘭！</span>
+        </div>
+        <div class="sfx-row" style="margin-top:8px">
+          <span class="sfx is-red" style="font-size:42px">通关！</span>
+          <span class="sfx" style="font-size:42px;transform:rotate(5deg)">升级！</span>
+        </div>
+        <p class="note">叮：答对　嘭：答错　通关：结算　升级：等级提升。每次只出现一个。</p>
+      </div>
+
+      <div class="comp"><h3>对话气泡与状态条</h3>
+        <div class="balloon">下一话，想看懂什么？</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:28px;flex-wrap:wrap">
+          <span class="cells" aria-label="第 3 格，共 5 格"><i class="ok"></i><i class="no"></i><i class="now"></i><i></i><i></i></span>
+          <span class="chip-stat"><svg><use href="#xp"/></svg>20</span>
+          <span class="chip-stat"><svg><use href="#coin"/></svg>128</span>
+        </div>
+        <p class="note">一行小格就是本话的答题记录：绿对、红错、黄是当前题。</p>
+      </div>
+
+      <div class="comp"><h3>等级称号</h3>
+        <ol class="levels">
+          <li><div class="bar" style="height:18px"></div><b>路人</b><span>Lv.1</span></li>
+          <li><div class="bar" style="height:30px"></div><b>龙套</b><span>Lv.2</span></li>
+          <li><div class="bar" style="height:42px"></div><b>配角</b><span>Lv.3</span></li>
+          <li><div class="bar" style="height:54px"></div><b>主角</b><span>Lv.4</span></li>
+          <li><div class="bar" style="height:66px"></div><b>传说</b><span>Lv.5</span></li>
+        </ol>
+        <p class="note">用漫画里的角色地位做称号，大家都从路人开始。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-sample">
+    <h2 id="h-sample">三张关键页样张</h2>
+    <p class="lead">正式原型按这个格式排：一行三屏，每屏下写页面名和交互说明。</p>
+    <div class="screens">
+
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><i></i></div>
+          <div class="navbar"><span class="brand">一话一懂</span><div class="capsule"><i></i></div></div>
+          <div class="content">
+            <div class="home-stats">
+              <span class="lvchip">Lv.2 龙套<span class="xp" aria-label="经验 260/400"><i></i></span></span>
+              <span class="chip-stat"><svg><use href="#coin"/></svg>128</span>
+            </div>
+            <label class="panel-in">
+              <span class="balloon">下一话，想看懂什么？</span>
+              <textarea aria-label="想学的内容" placeholder="一句话、一段话都行。比如：RAG 和传统搜索有啥区别"></textarea>
+              <div class="in-foot">
+                <div class="in-tools">
+                  <button type="button" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 1.5h5l3 3V14.5H4z M9 1.5v3h3"/></svg>传文档</button>
+                  <button type="button" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 9.5l3-3 M7 4.5l1.5-1.5a2.5 2.5 0 013.5 3.5L10.5 8 M9 11.5L7.5 13a2.5 2.5 0 01-3.5-3.5L5.5 8"/></svg>贴网址</button>
+                  <button type="button" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="3" width="13" height="10" rx="2"/><path d="M6.5 6v4l3.5-2z" fill="currentColor"/></svg>贴视频</button>
+                </div>
+                <span class="in-count">0 / 2000</span>
+              </div>
+            </label>
+            <div class="len" role="group" aria-label="这一话的长度">
+              <button aria-pressed="false"><b>3 题</b>约 2 分钟</button>
+              <button aria-pressed="true"><b>5 题</b>约 4 分钟</button>
+              <button aria-pressed="false"><b>10 题</b>约 8 分钟</button>
+            </div>
+            <div class="resume">
+              <span class="r-ep">续</span>
+              <div><b>RAG 入门，看到第 3 格</b>昨天 23:10 中断</div>
+              <span>继续</span>
+            </div>
+            <div class="home-cta"><button class="btn btn-primary">开始出题</button></div>
+          </div>
+          <nav class="tabbar">
+            <a class="is-on" href="#"><svg viewBox="0 0 26 26" fill="none" stroke="#000" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="4" width="20" height="18" fill="#FFD21F"/><path d="M13 4v18 M3 13h10"/></svg>闯关</a>
+            <a href="#"><svg viewBox="0 0 26 26" fill="none" stroke="#5E6670" stroke-width="2.2" stroke-linecap="round"><circle cx="13" cy="13" r="9.5"/><path d="M13 8v5l3.5 2.5"/></svg>复习</a>
+            <a href="#"><svg viewBox="0 0 26 26" fill="none" stroke="#5E6670" stroke-width="2.2" stroke-linecap="round"><circle cx="13" cy="9" r="4.5"/><path d="M4.5 23c1-5 4.5-7 8.5-7s7.5 2 8.5 7"/></svg>我的</a>
+          </nav>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>首页</b><p>输入框是一格空白分镜。可以选这一话的长度，方便按碎片时间选题量。中断过的闯关可以一键续上。传文档、贴网址、贴视频置灰（P1）。</p></div>
+      </div>
+
+      <div class="screen-item">
+        <div class="phone"><div class="screen anim" id="wrong-screen">
+          <div class="statusbar"><span>9:41</span><i></i></div>
+          <div class="navbar">
+            <button class="back" aria-label="退出闯关"><svg width="18" height="18" viewBox="0 0 18 18" stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M3 3l12 12M15 3L3 15"/></svg></button>
+            <div class="capsule"><i></i></div>
+          </div>
+          <div class="content">
+            <div class="q-top">
+              <span class="cells" aria-label="第 3 格，共 5 格"><i class="ok"></i><i class="ok"></i><i class="now"></i><i></i><i></i></span>
+              <span class="ep">第 3 格</span>
+              <span class="chip-stat"><svg><use href="#xp"/></svg>20</span>
+            </div>
+            <div class="q-panel">
+              <span class="tag">多选题</span>
+              <h4>3. 下面哪些是 RAG 相比纯大模型回答的优势？</h4>
+              <span class="sfx is-gloom sfx-pop">嘭！</span>
+            </div>
+            <div class="opts">
+              <div class="opt is-missed m3"><span class="key">A</span>能用上最新的外部资料<span class="miss-tag">漏选</span></div>
+              <div class="opt is-wrong"><span class="key">B</span>回答从此完全不会出错<svg class="mark no m1" viewBox="0 0 28 28" aria-label="错误"><path pathLength="100" d="M5 5 L23 23 M23 5 L5 23"/></svg></div>
+              <div class="opt is-right"><span class="key">C</span>回答可以追溯到出处<svg class="mark ok m2" viewBox="0 0 28 28" aria-label="正确"><path pathLength="100" d="M4 15 L11 22 L25 5"/></svg></div>
+              <div class="opt"><span class="key">D</span>不需要准备任何资料</div>
+            </div>
+            <div class="after"><div class="caption-box">
+              <div class="cb-head"><b>讲解</b><button class="cb-toggle" aria-expanded="true">收起</button></div>
+              <p class="answer">正确答案：A、C</p>
+              <p>B 错在“完全”：RAG 能减少胡编，但查到的资料本身也可能有错。</p>
+              <p>A 该选：回答前先检索资料库，资料更新了，答案也跟着更新。</p>
+              <span class="kp">知识点：RAG 的优势与边界</span>
+            </div></div>
+          </div>
+          <div class="result-bar">
+            <b>差一点，漏了 A</b>
+            <span>这题不加经验值。看完讲解，下一格接着来。</span>
+            <button class="btn btn-primary">懂了，下一格</button>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>闯关页：多选答错</b><p>判题是一次编排：先标错、再标对、再提示漏选，最后“嘭！”和结果条弹出。答错不加经验值，讲解默认展开。<button class="replay" id="replay">重播判题动画</button></p></div>
+      </div>
+
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><i></i></div>
+          <div class="navbar is-center">
+            <button class="back" aria-label="返回"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg></button>
+            <span class="title">本话完结</span>
+            <div class="capsule"><i></i></div>
+          </div>
+          <div class="content">
+            <div class="page">
+              <div class="pn wide score-pn">
+                <span class="num">80<small>分</small></span>
+                <div class="t"><b>RAG 入门</b>答对 4 题，共 5 题，用时 3 分 12 秒<br>获得 40 经验、20 金币</div>
+              </div>
+              <div class="pn wide" style="padding-bottom:4px"><h5>三格记住它</h5></div>
+              <div class="pn strip"><em>一</em>RAG 是先检索资料，再让大模型组织回答。</div>
+              <div class="pn strip"><em>二</em>所以答案能更新，也能追溯出处。</div>
+              <div class="pn strip"><em>三</em>但资料本身有错时，它也会跟着错。</div>
+              <div class="pn wide"><h5>掌握度</h5>
+                <ul class="kps">
+                  <li><span>RAG 的基本定义</span><span class="meter"><i style="width:100%"></i></span><span class="pct">100%</span></li>
+                  <li><span>检索与生成的分工</span><span class="meter"><i style="width:100%"></i></span><span class="pct">100%</span></li>
+                  <li class="weak"><span>RAG 的优势与边界</span><span class="meter"><i style="width:50%"></i></span><span class="pct">50%</span></li>
+                </ul>
+              </div>
+              <div class="pn wide"><h5>下话预告</h5>
+                <ul class="next">
+                  <li>再闯一轮“优势与边界”，专挑多选题。</li>
+                  <li>试着用自己的话讲清 RAG 和搜索引擎的区别。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="report-actions">
+            <button class="btn btn-primary">生成分享海报</button>
+            <button class="btn btn-ghost">再闯一轮</button>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>复盘报告</b><p>整页排成一页漫画：大格放分数，三句总结排成三格条漫，下面是掌握度和“下话预告”（复习建议）。字段和报告接口一一对应。</p></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script>
+document.querySelectorAll('svg[data-burst]').forEach(function(svg){
+  var p = svg.getAttribute('data-burst').split(',').map(Number), n=p[0], R=p[1], r=p[2], pts=[];
+  for (var i=0;i<n*2;i++){var rad=(i%2?r:R)*(i%4===0?1:.9), a=Math.PI*i/n-Math.PI/2;
+    pts.push((65+rad*Math.cos(a)*1.05).toFixed(1)+','+(55+rad*Math.sin(a)*.85).toFixed(1));}
+  svg.innerHTML='<polygon points="'+pts.join(' ')+'" fill="#FFF4C4" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>';
+});
+document.getElementById('replay').addEventListener('click',function(){
+  var s=document.getElementById('wrong-screen'); s.classList.remove('anim'); void s.offsetWidth; s.classList.add('anim');
+});
+document.querySelectorAll('.len button').forEach(function(b){
+  b.addEventListener('click',function(){document.querySelectorAll('.len button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')});
+});
+document.querySelectorAll('.cb-toggle').forEach(function(b){
+  b.addEventListener('click',function(){
+    var open=b.getAttribute('aria-expanded')==='true';
+    b.setAttribute('aria-expanded',String(!open)); b.textContent=open?'展开':'收起';
+    b.closest('.caption-box').querySelectorAll('p,.kp').forEach(function(el){el.hidden=open});
+  });
+});
+</script>
+</body>
+</html>

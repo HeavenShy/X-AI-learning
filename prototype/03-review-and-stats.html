@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习后台与复盘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+/* 我的 */
+.me-page{padding-top:14px}
+.me-page .me{gap:14px}
+.me-page .me .xpline{margin-top:8px}
+.me-page .stat3{margin-top:20px}
+.me-page .list{margin-top:16px}
+.me-page .list li{padding:12px}
+.me{display:flex;align-items:center;gap:12px}
+.me .grow{flex:1}
+.me b{display:block;font:400 24px/1.2 var(--display)}
+.me .xpline{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:var(--muted)}
+.me .xpline .track{flex:1;height:10px;border:2px solid var(--ink);background:#fff}
+.me .xpline .track i{display:block;height:100%;width:2%;background:var(--yellow)}
+.badge-n{min-width:22px;height:22px;padding:0 6px;background:var(--red);color:#fff;font-size:12px;display:grid;place-items:center;border:1.5px solid var(--ink)}
+.list .val{font-size:13px;color:var(--muted)}
+
+/* 学习数据 */
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:120px;margin-top:6px;border-bottom:2px solid var(--ink)}
+.bars i{display:block;background:var(--yellow);border:2px solid var(--ink);border-bottom:0}
+.bars i.today{background:var(--halftone),var(--yellow)}
+.bar-x{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;font-size:11.5px;color:var(--muted);text-align:center;margin-top:4px}
+.big-n{font:400 34px/1 var(--display)}
+.big-n small{font:13px/1 var(--body);color:var(--muted);margin-left:4px}
+.trend{width:100%;height:70px;display:block;margin-top:6px}
+.mtr{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.mtr li{display:grid;grid-template-columns:44px 1fr 42px;align-items:center;gap:8px}
+.mtr .m{height:14px;border:2px solid var(--ink);background:#fff}
+.mtr .m i{display:block;height:100%;background:var(--green)}
+.mtr .weak .m i{background:var(--red)}
+.mtr .p{font:400 17px/1 var(--display);text-align:right}
+.mtr .weak .p{color:var(--red)}
+.insight{font-size:13px;margin-top:10px;border-top:1.5px dashed var(--line);padding-top:8px}
+
+/* 知识树 */
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin:2px 0 12px}
+.legend i{display:inline-block;width:12px;height:12px;border:1.5px solid var(--ink);margin-right:4px;vertical-align:-1px}
+.tree{list-style:none}
+.tree > li + li{margin-top:12px}
+.node{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--paper);border:2.5px solid var(--ink);padding:8px 10px;font-size:14px}
+.node b{font:400 19px/1.1 var(--display)}
+.node small{font-size:12px;color:var(--muted)}
+.node .pc{font:400 17px/1 var(--display);padding:3px 6px;border:2px solid var(--ink)}
+.pc.g{background:var(--green);color:#fff}
+.pc.y{background:var(--yellow)}
+.pc.r{background:var(--red);color:#fff}
+.tree ul{list-style:none;margin-left:16px;padding-top:6px}
+.tree ul li::after{content:"";position:absolute;left:0;top:-6px;bottom:0;border-left:2.5px solid var(--ink)}
+.tree ul li:last-child::after{bottom:50%}
+.tree ul li{position:relative;padding-left:16px}
+.tree ul li + li{margin-top:6px}
+.tree ul li::before{content:"";position:absolute;left:0;top:50%;width:16px;border-top:2.5px solid var(--ink)}
+.tree ul .node{padding:6px 10px}
+
+/* 历史 */
+.day{font-size:12.5px;color:var(--muted);margin:10px 0 6px}
+.day:first-of-type{margin-top:0}
+.hist .sc{font:400 22px/1 var(--display);min-width:44px;text-align:right}
+.hist .sc.r{color:var(--red)}
+.hist .go{font:400 16px/1 var(--display);border:2px solid var(--ink);background:var(--yellow);padding:5px 8px}
+
+/* 月度复盘 */
+.month{padding:14px}
+.month h3{font:400 30px/1.15 var(--display)}
+.month .stat3{margin-top:10px}
+.find{list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.find li{background:var(--paper);border:2.5px solid var(--ink);padding:8px;font-size:12.5px;line-height:1.55;min-height:108px}
+.find em{display:block;font:400 15px/1 var(--display);font-style:normal;color:var(--muted);margin-bottom:4px}
+.plan{font-size:13px;line-height:1.65}
+.plan li{margin-left:16px}
+.find + .card{margin-top:20px}
+
+/* 复习首页 */
+.due{padding:14px}
+.due h3{font:400 28px/1.2 var(--display)}
+.due p{font-size:13.5px;margin:4px 0 12px}
+.curve{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:4px}
+.curve li{text-align:center;font-size:11.5px;color:var(--muted)}
+.curve li b{display:grid;place-items:center;height:36px;border:2.5px solid var(--ink);background:var(--paper);font:400 17px/1 var(--display);color:var(--ink);margin-bottom:4px}
+.curve li.done b{background:var(--green);color:#fff}
+.curve li.now b{background:var(--yellow)}
+.curve-note{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+/* 错题本 */
+.wq{display:block!important}
+.wq .q{font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wq .meta{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
+.topic-h{display:flex;justify-content:space-between;font:400 17px/1 var(--display);margin:12px 0 6px}
+.topic-h:first-of-type{margin-top:0}
+.topic-h span{font:12.5px/1 var(--body);color:var(--muted)}
+.trace{font-size:12.5px;color:var(--muted);margin-top:10px;background:var(--paper);border:2px solid var(--ink);padding:8px 10px;line-height:1.7}
+.trace b{color:var(--ink)}
+
+/* 宝藏关 */
+.chest{height:200px;display:grid;place-items:center;background:var(--halftone),var(--yellow);border:3px solid var(--ink);position:relative}
+.chest svg{width:96px;height:96px;color:var(--ink)}
+.chest .x2{position:absolute;right:10px;top:10px;background:var(--ink);color:var(--yellow);font:400 20px/1 var(--display);padding:6px 8px}
+.tr-h{font:400 32px/1.2 var(--display);margin-top:16px}
+.tr-p{font-size:14px;color:var(--muted);margin-top:4px}
+.clear-c{text-align:center}
+.clear-c .sfx{font-size:72px;margin-top:40px}
+.clear-c .s{font:400 22px/1.3 var(--display);margin-top:20px}
+.gains{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.gains .chip-stat{height:38px;font-size:21px;padding:0 12px 0 7px}
+.gains .chip-stat svg{width:24px;height:24px}
+.next-list{text-align:left;margin-top:22px}
+
+/* 提醒设置 */
+.wheel{display:flex;justify-content:center;gap:24px;background:var(--paper);border:2.5px solid var(--ink);padding:6px 0;font:400 22px/1 var(--display)}
+.wheel div{display:flex;flex-direction:column;align-items:center;gap:10px;color:#A8AEB5}
+.wheel div b{color:var(--ink);font-size:30px;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);padding:6px 10px}
+.notice{background:#fff;border:1.5px solid #D5D9DE;border-radius:10px;padding:12px;font-size:13px;margin-top:8px;box-shadow:0 1px 0 #D5D9DE}
+.notice .n-h{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.notice .n-h i{width:20px;height:20px;background:var(--yellow);border:1.5px solid var(--ink);display:grid;place-items:center;font:400 12px/1 var(--display);font-style:normal;color:var(--ink)}
+.notice b{display:block;font-size:16px;margin:8px 0 6px}
+.notice dl{display:grid;grid-template-columns:64px 1fr;gap:4px;color:var(--muted)}
+.notice dd{color:var(--ink)}
+.notice .n-f{border-top:1px solid #E6E8EB;margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;color:var(--ink)}
+</style>
+</head>
+<body>
+<main class="proto">
+  <header class="proto-head">
+    <h1>学习后台与复盘</h1>
+    <p>P1 用户留存：看自己学了什么、学得怎样；错题按遗忘曲线自动回来，用“旧识重温”宝藏关帮你记牢。共 12 屏，数据接着 01 的那次通关往下走。</p>
+    <nav class="proto-nav" data-cur="03" aria-label="原型文件"></nav>
+  </header>
+
+  <!-- ================= 一、我的与学习数据 ================= -->
+  <section class="flow" aria-labelledby="f1">
+    <h2 id="f1">一、我的与学习数据</h2>
+    <p>“我的”是个人后台入口：统计、知识树、历史记录，以及按月生成的深度复盘。</p>
+    <div class="screens">
+
+      <!-- 1 我的 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><div class="capsule"></div></div>
+          <div class="content me-page">
+            <div class="me">
+              <span class="avatar">林</span>
+              <div class="grow">
+                <b style="display:flex;align-items:center;justify-content:space-between">林小满<span class="chip-stat" style="font-size:15px"><svg><use href="#coin"/></svg>148</span></b>
+                <div class="xpline"><span class="lvchip" style="height:22px;font-size:14px">Lv.3 配角</span><span class="track"><i></i></span><span>10 / 600</span></div>
+              </div>
+            </div>
+            <div class="stat3 mt12">
+              <div><b>12</b>已学话数</div>
+              <div><b>46</b>本周分钟</div>
+              <div><b>78%</b>总正确率</div>
+            </div>
+            <ul class="list mt12">
+              <li><span class="ico"><svg><use href="#i-chart"/></svg></span><span class="grow">学习数据</span><span class="chev"></span></li>
+              <li><span class="ico"><svg><use href="#i-tree"/></svg></span><span class="grow">知识树</span><span class="val">6 个主题</span><span class="chev"></span></li>
+              <li><span class="ico"><svg><use href="#i-clock"/></svg></span><span class="grow">历史记录</span><span class="chev"></span></li>
+              <li><span class="ico"><svg><use href="#i-cross-book"/></svg></span><span class="grow">错题本</span><span class="badge-n">9</span><span class="chev"></span></li>
+              <li><span class="ico"><svg><use href="#i-folder"/></svg></span><span class="grow">我的知识库</span><span class="chev"></span></li>
+              <li><span class="ico y"><svg><use href="#i-crown"/></svg></span><span class="grow">会员</span><span class="pill dark">开通</span><span class="chev"></span></li>
+            </ul>
+          </div>
+          <nav class="tabbar" data-on="我的"></nav>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>我的<small>pages/me</small></b><p>顶部是身份和等级，三个数字回答“我学了多少”。错题本用红色数字提醒还有几道没掌握。</p></div>
+      </div>
+
+      <!-- 2 学习数据 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">学习数据</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="seg" role="group" data-single><button aria-pressed="true">本周</button><button aria-pressed="false">本月</button><button aria-pressed="false">全部</button></div>
+            <div class="card mt12">
+              <div class="card-h"><b>学习时长</b><span>11 月 3 日 – 9 日</span></div>
+              <span class="big-n">46<small>分钟，比上周多 12 分钟</small></span>
+              <div class="bars" role="img" aria-label="周一 8 分钟，周二 4 分钟，周三 0，周四 12 分钟，周五 6 分钟，周六 9 分钟，周日 7 分钟">
+                <i style="height:40%"></i><i style="height:20%"></i><i style="height:0;border:0"></i><i style="height:60%"></i><i style="height:30%"></i><i style="height:45%"></i><i class="today" style="height:35%"></i>
+              </div>
+              <div class="bar-x"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>今天</span></div>
+            </div>
+            <div class="card">
+              <div class="card-h"><b>题型正确率</b><span>本周 41 题</span></div>
+              <ul class="mtr">
+                <li><span>单选</span><span class="m"><i style="width:86%"></i></span><span class="p">86%</span></li>
+                <li><span>判断</span><span class="m"><i style="width:80%"></i></span><span class="p">80%</span></li>
+                <li class="weak"><span>多选</span><span class="m"><i style="width:52%"></i></span><span class="p">52%</span></li>
+              </ul>
+              <p class="insight">多选题错得最多，7 次里有 5 次是漏选。下次多选时，把每个选项都单独判断一遍。</p>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>学习数据</b><p>只放两张图：时长回答“学得勤不勤”，题型正确率回答“哪里容易错”。图下面直接写一句 AI 结论，用户不用自己读图。</p></div>
+      </div>
+
+      <!-- 3 知识树 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">知识树</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="legend"><span><i style="background:var(--green)"></i>掌握 80% 以上</span><span><i style="background:var(--yellow)"></i>60–79%</span><span><i style="background:var(--red)"></i>低于 60%</span></div>
+            <ul class="tree">
+              <li><div class="node"><span><b>AI 技术</b> <small>3 话</small></span><span class="pc y">77%</span></div>
+                <ul>
+                  <li><div class="node"><span>RAG 入门</span><span class="pc y">78%</span></div></li>
+                  <li><div class="node"><span>向量数据库</span><span class="pc r">55%</span></div></li>
+                  <li><div class="node"><span>Prompt 怎么写</span><span class="pc g">96%</span></div></li>
+                </ul>
+              </li>
+              <li><div class="node"><span><b>理财</b> <small>2 话</small></span><span class="pc y">70%</span></div>
+                <ul>
+                  <li><div class="node"><span>复利入门</span><span class="pc g">100%</span></div></li>
+                  <li><div class="node"><span>基金定投</span><span class="pc r">40%</span></div></li>
+                </ul>
+              </li>
+              <li><div class="node"><span><b>生活常识</b> <small>1 话</small></span><span class="pc g">100%</span></div>
+                <ul>
+                  <li><div class="node"><span>咖啡因为什么提神</span><span class="pc g">100%</span></div></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>知识树</b><p>AI 把每一话归到主题下，用颜色标出掌握度。点红色的节点可以直接“再闯一轮”，专练这个知识点。</p></div>
+      </div>
+
+      <!-- 4 历史记录 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">历史记录</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="tabs" role="tablist"><button role="tab" aria-selected="true">全部 12</button><button role="tab" aria-selected="false">没答完 1</button><button role="tab" aria-selected="false">已完结 11</button></div>
+            <p class="day">今天</p>
+            <ul class="list hist">
+              <li><span class="grow">RAG 入门<small>5 题，3 分 12 秒</small></span><span class="sc">80</span></li>
+            </ul>
+            <p class="day">昨天</p>
+            <ul class="list hist">
+              <li><span class="grow">复利入门<small>答到第 3 格，23:10 中断</small></span><span class="go">继续</span></li>
+              <li><span class="grow">咖啡因为什么提神<small>3 题，1 分 40 秒</small></span><span class="sc">100</span></li>
+            </ul>
+            <p class="day">11 月 1 日</p>
+            <ul class="list hist">
+              <li><span class="grow">基金定投<small>5 题，4 分 05 秒</small></span><span class="sc r">40</span></li>
+              <li><span class="grow">Prompt 怎么写<small>10 题，7 分 30 秒</small></span><span class="sc">90</span></li>
+              <li><span class="grow">向量数据库<small>5 题，3 分 50 秒</small></span><span class="sc r">55</span></li>
+            </ul>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>历史记录</b><p>按日期分组，分数低于 60 用红色。点已完结的一话打开当时的复盘报告；没答完的直接“继续”。</p></div>
+      </div>
+
+      <!-- 5 月度深度复盘 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">10 月复盘</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card hl month">
+              <h3>10 月，你看懂了 9 件事</h3>
+              <div class="stat3">
+                <div><b>9</b>话</div>
+                <div><b>138</b>分钟</div>
+                <div><b>74%</b>正确率</div>
+              </div>
+            </div>
+            <p class="sec-t">这个月的三个发现</p>
+            <ul class="find">
+              <li><em>一</em>你常在通勤时间学，早上 8 点前后正确率最高。</li>
+              <li><em>二</em>AI 类主题学得最多，但向量数据库还没吃透。</li>
+              <li><em>三</em>理财类错题集中在“费率”和“复利周期”。</li>
+            </ul>
+            <div class="card mt12">
+              <div class="card-h"><b>11 月可以这样学</b></div>
+              <ul class="plan">
+                <li>先用宝藏关清掉 9 道错题。</li>
+                <li>给“向量数据库”再来一话，选 10 题。</li>
+                <li>每周学 3 次就够，不用天天学。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">分享</button><button class="btn btn-primary" style="flex:1.6">开始练薄弱点</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>月度深度复盘</b><p>需求里的“后台生成报告”：每月初 AI 汇总上月所有答题记录，版式沿用 01 的复盘报告，三个发现排成三格条漫。</p></div>
+      </div>
+
+      <!-- 6 空状态 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">历史记录</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="empty">
+              <div class="frame">第 0 话</div>
+              <h3>还没有学习记录</h3>
+              <p>写一句想搞懂的事，3 分钟就能看完第一话。</p>
+              <button class="btn btn-primary">去出第一话</button>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>空状态</b><p>空页面是一格还没画的分镜，按钮直接带去首页。学习数据、知识树、错题本的空状态都用同一个结构，只换文案。</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 二、错题与复习 ================= -->
+  <section class="flow" aria-labelledby="f2">
+    <h2 id="f2">二、错题与复习</h2>
+    <p>答错的题进入错题本，按遗忘曲线在第 1、2、4、7、15 天回来；到期的题凑成“旧识重温”宝藏关，经验翻倍。</p>
+    <div class="screens">
+
+      <!-- 7 复习首页 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><span class="brand">复习</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card hl due">
+              <h3>今天有 6 道题快忘了</h3>
+              <p>按遗忘曲线挑出来的，约 3 分钟，经验翻倍。</p>
+              <button class="btn btn-primary" style="background:#fff">开宝藏关</button>
+            </div>
+            <div class="card mt12">
+              <div class="card-h"><b>一道错题的复习节奏</b></div>
+              <ol class="curve">
+                <li class="done"><b>1</b>第 1 天</li>
+                <li class="done"><b>2</b>第 2 天</li>
+                <li class="now"><b>4</b>第 4 天</li>
+                <li><b>7</b>第 7 天</li>
+                <li><b>15</b>第 15 天</li>
+              </ol>
+              <p class="curve-note">连续答对就进下一档；再答错就回到第 1 天。走完 5 档算掌握。</p>
+            </div>
+            <ul class="list mt12">
+              <li><span class="ico"><svg><use href="#i-cross-book"/></svg></span><span class="grow">错题本<small>9 道还没掌握，23 道已掌握</small></span><span class="chev"></span></li>
+              <li><span class="ico"><svg><use href="#i-bell"/></svg></span><span class="grow">复习提醒<small>每天 21:30</small></span><span class="chev"></span></li>
+            </ul>
+          </div>
+          <nav class="tabbar" data-on="复习"></nav>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>复习<small>pages/review</small></b><p>底部第二个标签。最上面只有一件事：今天该复习的题。节奏说明用五格进度讲清遗忘曲线，不出现“艾宾浩斯”这类术语。</p></div>
+      </div>
+
+      <!-- 8 错题本 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">错题本</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="tabs" role="tablist"><button role="tab" aria-selected="true">没掌握 9</button><button role="tab" aria-selected="false">已掌握 23</button></div>
+            <p class="topic-h">基金定投<span>4 道</span></p>
+            <ul class="list">
+              <li class="wq"><span class="q">定投时“申购费率 1.5%、打一折”，实际每次扣多少费用？</span><span class="meta"><span class="pill">单选</span>错 2 次，明天复习</span></li>
+              <li class="wq"><span class="q">下面哪些情况适合用定投代替一次性买入？</span><span class="meta"><span class="pill">多选</span>错 1 次，11 月 8 日复习</span></li>
+            </ul>
+            <p class="topic-h">向量数据库<span>3 道</span></p>
+            <ul class="list">
+              <li class="wq"><span class="q">余弦相似度越接近 1，说明两段文字越相似。</span><span class="meta"><span class="pill">判断</span>错 1 次，今天复习</span></li>
+            </ul>
+            <p class="topic-h">RAG 入门<span>1 道</span></p>
+            <ul class="list">
+              <li class="wq"><span class="q">下面哪些是 RAG 相比纯大模型回答的优势？</span><span class="meta"><span class="pill">多选</span>错 1 次，明天复习</span></li>
+            </ul>
+          </div>
+          <div class="foot"><button class="btn btn-primary">把 9 道都练一遍</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>错题本</b><p>按主题分组，每道题写清错了几次、下次什么时候复习。01 里答错的那道多选题已经在这里了。</p></div>
+      </div>
+
+      <!-- 9 错题详情 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">错题详情</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="q-panel">
+              <span class="tag">单选题</span>
+              <h4>定投时“申购费率 1.5%、打一折”，每次投 1000 元实际扣多少费用？</h4>
+            </div>
+            <div class="opts">
+              <div class="opt is-wrong"><span class="key">A</span>15 元（你上次的答案）<svg class="mark no" viewBox="0 0 28 28" aria-label="错误"><path d="M5 5 L23 23 M23 5 L5 23"/></svg></div>
+              <div class="opt is-right"><span class="key">B</span>约 1.5 元<svg class="mark ok" viewBox="0 0 28 28" aria-label="正确"><path d="M4 15 L11 22 L25 5"/></svg></div>
+            </div>
+            <div class="after"><div class="caption-box">
+              <div class="cb-head"><b>讲解</b></div>
+              <div class="cb-body">
+                <p>“打一折”是按原费率的 10% 收，所以实际费率是 0.15%，1000 元约扣 1.5 元。</p>
+                <span class="kp">知识点：申购费率</span>
+              </div>
+            </div></div>
+            <p class="trace">第一次错：<b>11 月 1 日</b>　已复习 <b>1</b> 次<br>下次复习：<b>明天</b>（第 2 天档）</p>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">已经会了</button><button class="btn btn-primary" style="flex:1.4">再做一次</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>错题详情</b><p>保留上次的错误答案，对比更直观。“已经会了”直接移入已掌握，适合用户确实懂了、不想再等复习的情况。</p></div>
+      </div>
+
+      <!-- 10 宝藏关开场 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">旧识重温</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="chest"><svg><use href="#i-chest"/></svg><span class="x2">经验 ×2</span></div>
+            <h3 class="tr-h">宝藏关：6 道快忘的题</h3>
+            <p class="tr-p">来自你学过的 3 话，每道都到了该复习的时候。</p>
+            <ul class="list mt12">
+              <li><span class="grow">基金定投<small>4 天前学过，上次答错</small></span><span class="pill">3 道</span></li>
+              <li><span class="grow">向量数据库<small>2 天前学过，上次答错</small></span><span class="pill">2 道</span></li>
+              <li><span class="grow">RAG 入门<small>今天学过，上次答错</small></span><span class="pill">1 道</span></li>
+            </ul>
+          </div>
+          <div class="foot"><button class="btn btn-primary">开宝藏</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>宝藏关开场</b><p>宝箱只在这里出现，经验翻倍作为回来复习的理由。答题过程和 01 的逐格答题一致。</p></div>
+      </div>
+
+      <!-- 11 宝藏关结算 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen" style="background:var(--paper)">
+          <div class="statusbar"></div>
+          <div class="navbar"><div class="capsule"></div></div>
+          <div class="content clear-c">
+            <span class="sfx">记住了！</span>
+            <p class="s">6 道答对 5 道</p>
+            <div class="gains">
+              <span class="chip-stat"><svg><use href="#xp"/></svg>+100</span>
+              <span class="chip-stat"><svg><use href="#coin"/></svg>+25</span>
+            </div>
+            <div class="next-list">
+              <p class="sec-t">接下来<span>按遗忘曲线排好了</span></p>
+              <ul class="list">
+                <li><span class="pill ok">升档</span><span class="grow">RAG 的优势与边界<small>下次：7 天后</small></span></li>
+                <li><span class="pill ok">升档</span><span class="grow">余弦相似度<small>下次：4 天后</small></span></li>
+                <li><span class="pill no">重来</span><span class="grow">申购费率<small>又答错了，明天再见</small></span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">回到复习</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>宝藏关结算</b><p>答对的题升一档，答错的回到第 1 天。经验按双倍结算：5 题 × 10 × 2 = 100。</p></div>
+      </div>
+
+      <!-- 12 复习提醒 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">复习提醒</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="set-row card" style="display:flex;align-items:center;gap:12px"><span style="flex:1;font-size:15px">有题到期时提醒我</span><button class="switch" role="switch" aria-checked="true" aria-label="有题到期时提醒我"></button></div>
+            <div class="field"><span>提醒时间</span>
+              <div class="wheel" aria-label="21:30">
+                <div><span>20</span><b>21</b><span>22</span></div>
+                <div><span>00</span><b>30</b><span>45</span></div>
+              </div>
+            </div>
+            <div class="field"><span>提醒长这样</span>
+              <div class="notice">
+                <div class="n-h"><i>懂</i>一话一懂　服务通知</div>
+                <b>复习提醒</b>
+                <dl><dt>待复习</dt><dd>6 道题快忘了</dd><dt>预计用时</dt><dd>3 分钟</dd><dt>时间</dt><dd>今天 21:30</dd></dl>
+                <div class="n-f"><span>进入宝藏关</span><span class="chev"></span></div>
+              </div>
+            </div>
+            <p class="tip" style="font-size:12.5px;color:var(--muted);margin-top:12px">微信每次授权只能发一条提醒，所以每次复习完会再问你一次要不要提醒。</p>
+          </div>
+          <div class="foot"><button class="btn btn-primary">保存</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>复习提醒</b><p>用小程序订阅消息实现，预览让用户知道会收到什么。把“一次授权一条”的限制写明，避免用户以为提醒失效了。</p></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+<script src="assets/proto.js"></script>
+</body>
+</html>

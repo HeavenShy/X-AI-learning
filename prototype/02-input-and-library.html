@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多源输入与知识库</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/proto.css">
+<style>
+/* 来源选择面板 */
+.src-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.src-list li{display:flex;align-items:center;gap:12px;border:2.5px solid var(--ink);padding:10px 12px;background:var(--paper)}
+.src-list b{display:block;font-size:15px}
+.src-list small{display:block;font-size:12.5px;color:var(--muted)}
+.src-list .grow{flex:1}
+.ghost-home{opacity:.9}
+.ghost-home .gh-in{height:220px;margin-top:22px;background:var(--paper);border:3px solid var(--ink)}
+
+/* 已选文件 / 链接预览 */
+.file{display:flex;align-items:center;gap:12px}
+.file .grow{flex:1;min-width:0}
+.file b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file small{font-size:12.5px;color:var(--muted)}
+.file a{font-size:13px;color:var(--blue)}
+.clip{display:flex;gap:8px;align-items:center;background:var(--green-soft);border:2px solid var(--green);padding:7px 10px;font-size:13px;margin-top:8px}
+.clip svg{width:18px;height:18px;flex:none}
+.preview{display:flex;gap:10px;margin-top:10px}
+.preview .thumb{flex:none;width:92px;height:68px;border:2px solid var(--ink);background:var(--halftone),var(--yellow-soft);display:grid;place-items:center;position:relative}
+.preview .thumb svg{width:26px;height:26px}
+.preview .thumb span{position:absolute;right:3px;bottom:3px;background:var(--ink);color:#fff;font-size:11px;padding:0 4px}
+.preview .site{font-size:12px;color:var(--muted)}
+.preview b{display:block;font-size:14.5px;line-height:1.45}
+.preview small{font-size:12px;color:var(--muted)}
+.range{display:flex;align-items:center;gap:8px}
+.range .input{width:auto;flex:1}
+
+/* 解析进度（与 01 出题中一致） */
+.steps{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.steps li{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:12px;background:var(--paper);border:2.5px solid var(--ink);padding:11px 12px}
+.steps .n{width:40px;height:40px;border:2.5px solid var(--ink);display:grid;place-items:center;font:400 22px/1 var(--display)}
+.steps b{display:block;font-size:15px}
+.steps small{font-size:12.5px;color:var(--muted)}
+.steps .st{font:400 16px/1 var(--display)}
+.steps .done .n{background:var(--green);color:#fff}
+.steps .done .st{color:var(--green)}
+.steps .doing{background:var(--halftone),var(--paper)}
+.steps .doing .n{background:var(--yellow)}
+.steps .wait{border-color:#A8AEB5;color:#8A929B}
+.steps .wait .n{border-color:#A8AEB5}
+.bar-run{grid-column:1 / -1;height:10px;border:2px solid var(--ink);background:#fff;overflow:hidden}
+.bar-run i{display:block;height:100%;width:55%;background:var(--yellow);border-right:2px solid var(--ink);animation:run 2.4s ease-in-out infinite alternate}
+@keyframes run{from{width:30%}to{width:80%}}
+.tip{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6}
+.fail-pn{margin-top:14px;background:var(--paper);border:3px solid var(--ink);padding:16px}
+.fail-pn h3{font:400 30px/1.2 var(--display)}
+.fail-pn p{font-size:14.5px;line-height:1.7;margin-top:8px}
+.fixes{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.fixes button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px;font-size:14.5px}
+.fixes button .grow{flex:1}
+.fixes small{display:block;font-size:12.5px;color:var(--muted)}
+
+/* 知识库 */
+.quota{margin-top:12px;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px;font-size:13px}
+.quota .track{height:12px;border:2px solid var(--ink);background:#fff;margin:6px 0 4px}
+.quota .track i{display:block;height:100%;width:36%;background:var(--yellow);border-right:2px solid var(--ink)}
+.quota .row{display:flex;justify-content:space-between;color:var(--muted)}
+.lib-head{padding:14px}
+.lib-head h3{font:400 30px/1.15 var(--display)}
+.lib-head p{font-size:13px;margin-top:4px}
+.lib-actions{display:flex;gap:10px;margin-top:12px}
+.lib-actions .btn{font-size:18px;min-height:44px;width:auto;flex:1}
+.opt-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.opt-list li{display:flex;gap:12px;align-items:flex-start;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px}
+.opt-list li.on{background:var(--halftone),var(--paper)}
+.opt-list b{display:block;font-size:15px}
+.opt-list small{display:block;font-size:12.5px;color:var(--muted);line-height:1.5}
+.opt-list .grow{flex:1}
+.set-row{display:flex;align-items:center;gap:12px;background:var(--paper);border:2.5px solid var(--ink);padding:10px 12px;margin-top:8px}
+.set-row .grow{flex:1;font-size:14.5px}
+.set-row small{display:block;font-size:12.5px;color:var(--muted)}
+
+/* 模拟考试 */
+.exam-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.timer{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;background:var(--ink);color:var(--yellow);font:400 20px/1 var(--display)}
+.timer svg{width:18px;height:18px;color:var(--yellow)}
+.exam-top .of{font:400 18px/1 var(--display)}
+.sheet-btn{font-size:13px;border:2px solid var(--ink);background:var(--paper);height:32px;padding:0 10px}
+.exam-note{font-size:12.5px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<main class="proto">
+  <header class="proto-head">
+    <h1>多源输入与知识库</h1>
+    <p>P1 输入扩展：除了一句话，还能用文档、网页、视频出题；也能建自己的知识库，用于考试备考和企业考核。共 12 屏，沿用 01 的出题、答题和复盘流程。</p>
+    <nav class="proto-nav" data-cur="02" aria-label="原型文件"></nav>
+  </header>
+
+  <!-- ================= 一、多源输入 ================= -->
+  <section class="flow" aria-labelledby="f1">
+    <h2 id="f1">一、文档、网页、视频出题</h2>
+    <p>首页输入框下方的三个入口在 P1 启用。解析完成后进入 01 的“本话目录”。</p>
+    <div class="screens">
+
+      <!-- 1 选择来源 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><span class="brand">一话一懂</span><div class="capsule"></div></div>
+          <div class="content ghost-home"><div class="gh-in"></div></div>
+          <div class="home-ind"></div>
+          <div class="scrim is-bottom">
+            <div class="sheet" role="dialog" aria-labelledby="sh1">
+              <h3 id="sh1">从哪里出题？</h3>
+              <ul class="src-list">
+                <li><span class="ico y"><svg><use href="#i-doc"/></svg></span><span class="grow"><b>聊天里的文件</b><small>PDF、Word、PPT，单个不超过 20 MB</small></span><span class="chev"></span></li>
+                <li><span class="ico y"><svg><use href="#i-link"/></svg></span><span class="grow"><b>网页链接</b><small>公众号文章、博客、百科</small></span><span class="chev"></span></li>
+                <li><span class="ico y"><svg><use href="#i-video"/></svg></span><span class="grow"><b>视频链接</b><small>B 站、视频号等带字幕的视频</small></span><span class="chev"></span></li>
+                <li><span class="ico"><svg><use href="#i-folder"/></svg></span><span class="grow"><b>我的知识库</b><small>用已经上传的资料出题</small></span><span class="chev"></span></li>
+              </ul>
+            </div>
+          </div>
+        </div></div>
+        <div class="cap"><b>选择来源</b><p>点首页的“传文档”等入口时弹出。小程序只能从微信聊天里选文件，所以文案写“聊天里的文件”，避免用户去手机相册里找。</p></div>
+      </div>
+
+      <!-- 2 文档 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">用文档出题</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card file">
+              <span class="ico y"><svg><use href="#i-doc"/></svg></span>
+              <span class="grow"><b>RAG 技术白皮书 2026.pdf</b><small>2.3 MB，共 38 页</small></span>
+              <a href="#">更换</a>
+            </div>
+            <div class="field"><span>出题范围</span>
+              <div class="seg" role="group" data-single><button aria-pressed="false">全文</button><button aria-pressed="true">指定页码</button></div>
+              <div class="range" style="margin-top:14px"><div class="input"><input value="12" aria-label="起始页"></div><span>到</span><div class="input"><input value="20" aria-label="结束页"></div><span>页</span></div>
+            </div>
+            <label class="field"><span>想重点学什么（选填）</span>
+              <div class="input"><input placeholder="比如：检索流程、评估指标"></div>
+              <small>写了会优先围绕这些内容出题。</small>
+            </label>
+            <div class="field"><span>题量</span>
+              <div class="seg" role="group" data-single><button aria-pressed="true">5 题</button><button aria-pressed="false">10 题</button><button aria-pressed="false">20 题</button></div>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">解析并出题</button><p class="fine">文档只用于这次出题，可以在“我的”里随时删除。</p></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>用文档出题</b><p>长文档默认建议指定页码，出题更聚焦、等待更短。20 题需要会员时，在这里提示并给开通入口（见 04）。</p></div>
+      </div>
+
+      <!-- 3 网址 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">用网页出题</span><div class="capsule"></div></div>
+          <div class="content">
+            <label class="field" style="margin-top:4px"><span>网页链接</span>
+              <div class="input"><svg class="i"><use href="#i-link"/></svg><input value="https://mp.weixin.qq.com/s/rag-guide" aria-label="网页链接"></div>
+            </label>
+            <p class="clip"><svg><use href="#i-ok"/></svg>检测到剪贴板里有链接，已帮你填好。</p>
+            <div class="card mt12">
+              <div class="card-h"><b>网页预览</b><span>已读取</span></div>
+              <div class="preview" style="margin-top:0">
+                <span class="thumb"><svg><use href="#i-doc"/></svg></span>
+                <span><span class="site">mp.weixin.qq.com</span><b>一文看懂 RAG：从原理到落地</b><small>约 6800 字，读完要 15 分钟</small></span>
+              </div>
+            </div>
+            <label class="field"><span>想重点学什么（选填）</span>
+              <div class="input"><input placeholder="比如：和微调怎么选"></div>
+            </label>
+            <div class="field"><span>题量</span>
+              <div class="seg" role="group" data-single><button aria-pressed="true">5 题</button><button aria-pressed="false">10 题</button><button aria-pressed="false">20 题</button></div>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">解析并出题</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>用网页出题</b><p>进入页面时读剪贴板，有链接就自动填好。先展示标题和字数，让用户确认是这篇，再开始解析。</p></div>
+      </div>
+
+      <!-- 4 视频 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">用视频出题</span><div class="capsule"></div></div>
+          <div class="content">
+            <label class="field" style="margin-top:4px"><span>视频链接</span>
+              <div class="input"><svg class="i"><use href="#i-video"/></svg><input value="https://b23.tv/rag10min" aria-label="视频链接"></div>
+            </label>
+            <div class="card mt12">
+              <div class="card-h"><b>视频预览</b><span class="pill ok">已识别中文字幕</span></div>
+              <div class="preview" style="margin-top:0">
+                <span class="thumb"><svg><use href="#i-play"/></svg><span>12:30</span></span>
+                <span><span class="site">bilibili.com</span><b>RAG 十分钟讲明白</b><small>按字幕内容出题，不看画面</small></span>
+              </div>
+            </div>
+            <div class="field"><span>只学其中一段（选填）</span>
+              <div class="range"><div class="input"><input value="02:10" aria-label="开始时间"></div><span>到</span><div class="input"><input value="08:45" aria-label="结束时间"></div></div>
+              <small>不填就按整段视频出题。</small>
+            </div>
+            <div class="field"><span>题量</span>
+              <div class="seg" role="group" data-single><button aria-pressed="true">5 题</button><button aria-pressed="false">10 题</button><button aria-pressed="false">20 题</button></div>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">解析并出题</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>用视频出题</b><p>先按字幕出题，画面理解留到多模态阶段。讲解里会标出对应的时间点，方便回去重看。</p></div>
+      </div>
+
+      <!-- 5 解析进度 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><span class="title">解析中</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card file">
+              <span class="ico y"><svg><use href="#i-doc"/></svg></span>
+              <span class="grow"><b>RAG 技术白皮书 2026.pdf</b><small>第 12–20 页，出 5 题</small></span>
+            </div>
+            <ol class="steps">
+              <li class="done"><span class="n">1</span><span><b>读取文件</b><small>2.3 MB</small></span><span class="st">完成</span></li>
+              <li class="done"><span class="n">2</span><span><b>提取文字</b><small>9 页，约 5400 字</small></span><span class="st">完成</span></li>
+              <li class="doing"><span class="n">3</span><span><b>提炼知识点</b><small>已找到 7 个</small></span><span class="st">进行中</span><span class="bar-run"><i></i></span></li>
+              <li class="wait"><span class="n">4</span><span><b>出题并写讲解</b><small>讲解会标出页码</small></span><span class="st">等待</span></li>
+            </ol>
+            <p class="tip">大文档可能要 1 分钟左右。可以先去做别的，好了会发微信服务通知。</p>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">取消</button><button class="btn btn-primary" style="flex:1.6">好了通知我</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>解析进度</b><p>比一句话出题多了“读取”和“提取文字”两步。“好了通知我”会请求订阅消息授权，完成后用服务通知把用户带回本话目录。</p></div>
+      </div>
+
+      <!-- 6 解析失败 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">解析中</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card file">
+              <span class="ico"><svg><use href="#i-doc"/></svg></span>
+              <span class="grow"><b>部门培训材料（扫描件）.pdf</b><small>8.6 MB，共 24 页</small></span>
+            </div>
+            <div class="fail-pn">
+              <h3>这份文档读不出文字</h3>
+              <p>它看起来是扫描版 PDF，每页都是图片，所以提取不到文字。可以换个方式：</p>
+            </div>
+            <div class="fixes">
+              <button><span class="grow">换一份文字版文档<small>能选中、复制文字的 PDF 或 Word</small></span><span class="chev"></span></button>
+              <button><span class="grow">粘贴要学的段落<small>直接回到首页输入框</small></span><span class="chev"></span></button>
+              <button><span class="grow">贴原文的网页链接<small>如果这份资料有网页版</small></span><span class="chev"></span></button>
+            </div>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>解析失败</b><p>说清是哪一步失败、为什么，再给出能走通的替代方式。其他失败原因同样处理：网页需要登录、视频没有字幕、文件超过 20 MB。</p></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 二、私有知识库 ================= -->
+  <section class="flow" aria-labelledby="f2">
+    <h2 id="f2">二、私有知识库</h2>
+    <p>把资料长期存起来，反复出题。适合考证备考、公司新人考核。题目和讲解只基于库里的资料，并标出出处。</p>
+    <div class="screens">
+
+      <!-- 7 知识库列表 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">我的知识库</span><div class="capsule"></div></div>
+          <div class="content">
+            <p class="page-sub">用自己的资料出题，题目只来自库里的内容。</p>
+            <div class="quota">
+              <div class="row"><span>已存资料</span><span>18 / 50 份</span></div>
+              <div class="track"><i></i></div>
+            </div>
+            <ul class="list mt12">
+              <li><span class="ico y"><svg><use href="#i-folder"/></svg></span><span class="grow">公司新人考核<small>12 份资料，昨天更新</small></span><span class="pill dark">考核</span><span class="chev"></span></li>
+              <li><span class="ico y"><svg><use href="#i-folder"/></svg></span><span class="grow">PMP 备考<small>5 份资料，3 天前更新</small></span><span class="pill">备考</span><span class="chev"></span></li>
+              <li><span class="ico y"><svg><use href="#i-folder"/></svg></span><span class="grow">读书笔记<small>1 份资料，上周更新</small></span><span class="pill">笔记</span><span class="chev"></span></li>
+            </ul>
+          </div>
+          <div class="foot"><button class="btn btn-ghost"><svg class="i"><use href="#i-plus"/></svg>新建知识库</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>知识库列表</b><p>从“我的”或首页来源面板进入。顶部显示存储额度，额度属于会员权益（见 04）。</p></div>
+      </div>
+
+      <!-- 8 新建 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">新建知识库</span><div class="capsule"></div></div>
+          <div class="content">
+            <label class="field" style="margin-top:4px"><span>名字</span>
+              <div class="input"><input value="公司新人考核" aria-label="知识库名字"></div>
+            </label>
+            <div class="field"><span>拿来做什么</span>
+              <ul class="opt-list">
+                <li><span class="radio"></span><span class="grow"><b>考试备考</b><small>按真题风格出题，支持计时模拟考试</small></span></li>
+                <li class="on"><span class="radio on"></span><span class="grow"><b>企业培训考核</b><small>按制度和流程出题，讲解标出条款</small></span></li>
+                <li><span class="radio"></span><span class="grow"><b>个人笔记</b><small>轻松练习，不计时</small></span></li>
+              </ul>
+            </div>
+            <div class="set-row"><span class="grow">讲解里标出资料出处<small>显示文件名和页码</small></span><button class="switch" role="switch" aria-checked="true" aria-label="讲解里标出资料出处"></button></div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">创建，然后上传资料</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>新建知识库</b><p>用途决定出题风格和默认模式，后续可以改。知识库仅自己可见，企业共享版本放到 B2B 定制里做。</p></div>
+      </div>
+
+      <!-- 9 知识库详情 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">知识库</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="card hl lib-head">
+              <h3>公司新人考核</h3>
+              <p>12 份资料，已出过 86 道题，平均正确率 74%</p>
+              <div class="lib-actions">
+                <button class="btn btn-ghost"><svg class="i"><use href="#i-upload"/></svg>上传</button>
+                <button class="btn btn-primary" style="flex:1.5;background:#fff">用这个库出题</button>
+              </div>
+            </div>
+            <p class="sec-t">资料<span>按更新时间</span></p>
+            <ul class="list">
+              <li><span class="ico"><svg><use href="#i-doc"/></svg></span><span class="grow">员工手册 2026.pdf<small>42 页</small></span><span class="pill ok">可出题</span></li>
+              <li><span class="ico"><svg><use href="#i-doc"/></svg></span><span class="grow">报销制度.docx<small>9 页</small></span><span class="pill ok">可出题</span></li>
+              <li><span class="ico"><svg><use href="#i-doc"/></svg></span><span class="grow">信息安全规范.pdf<small>正在提取文字，约 1 分钟</small></span><span class="pill run">解析中</span></li>
+              <li><span class="ico"><svg><use href="#i-image"/></svg></span><span class="grow">组织架构图.png<small>图片里没有可识别的文字</small></span><span class="pill no">失败</span></li>
+            </ul>
+          </div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>知识库详情</b><p>每份资料都显示能不能出题。失败的资料直接写原因，长按可删除或重新上传。</p></div>
+      </div>
+
+      <!-- 10 出题设置 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">用知识库出题</span><div class="capsule"></div></div>
+          <div class="content">
+            <p class="sec-t" style="margin-top:4px">从哪些资料出<span>已选 2 份</span></p>
+            <ul class="list">
+              <li><span class="check on"></span><span class="grow">员工手册 2026.pdf</span></li>
+              <li><span class="check on"></span><span class="grow">报销制度.docx</span></li>
+              <li><span class="check"></span><span class="grow" style="color:var(--muted)">信息安全规范.pdf<small>解析完成后可选</small></span></li>
+            </ul>
+            <div class="field"><span>模式</span>
+              <ul class="opt-list">
+                <li><span class="radio"></span><span class="grow"><b>练习</b><small>每题即时判对错、看讲解</small></span></li>
+                <li class="on"><span class="radio on"></span><span class="grow"><b>模拟考试</b><small>计时 30 分钟，交卷后统一看成绩和讲解</small></span></li>
+              </ul>
+            </div>
+            <div class="field"><span>题量</span>
+              <div class="seg" role="group" data-single><button aria-pressed="false">10 题</button><button aria-pressed="true">20 题</button><button aria-pressed="false">50 题</button></div>
+            </div>
+          </div>
+          <div class="foot"><button class="btn btn-primary">开始模拟考试</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>出题设置</b><p>“模拟考试”是知识库独有的模式，贴近真实考试，所以不即时判题。“练习”模式和 01 的逐格答题完全一致。</p></div>
+      </div>
+
+      <!-- 11 模拟考试 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar"><button class="back" aria-label="退出考试"><svg width="18" height="18"><use href="#i-close"/></svg></button><div class="capsule"></div></div>
+          <div class="content">
+            <div class="exam-top">
+              <span class="timer"><svg><use href="#i-clock"/></svg>18:32</span>
+              <span class="of">第 7 / 20 题</span>
+              <button class="sheet-btn">答题卡</button>
+            </div>
+            <div class="q-panel">
+              <span class="tag">单选题</span>
+              <h4>7. 按公司报销制度，单笔超过多少金额需要部门负责人审批？</h4>
+            </div>
+            <div class="opts">
+              <button class="opt"><span class="key">A</span>1000 元</button>
+              <button class="opt"><span class="key">B</span>3000 元</button>
+              <button class="opt is-picked"><span class="key">C</span>5000 元</button>
+              <button class="opt"><span class="key">D</span>10000 元</button>
+            </div>
+            <p class="exam-note">考试模式不即时判题，可以随时改答案。时间到会自动交卷。</p>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">上一题</button><button class="btn btn-primary" style="flex:1.6">下一题</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>模拟考试中</b><p>计时用黑底黄字放在最显眼的位置。“答题卡”打开 20 题的完成情况，可以跳题。交卷后进入 01 的复盘报告，并附每题讲解。</p></div>
+      </div>
+
+      <!-- 12 讲解带出处 -->
+      <div class="screen-item">
+        <div class="phone"><div class="screen">
+          <div class="statusbar"></div>
+          <div class="navbar is-center"><button class="back" aria-label="返回"><svg width="12" height="20"><use href="#i-back"/></svg></button><span class="title">第 7 题讲解</span><div class="capsule"></div></div>
+          <div class="content">
+            <div class="q-panel">
+              <span class="tag">单选题</span>
+              <h4>7. 按公司报销制度，单笔超过多少金额需要部门负责人审批？</h4>
+            </div>
+            <div class="opts">
+              <div class="opt is-wrong"><span class="key">B</span>3000 元（你的答案）<svg class="mark no" viewBox="0 0 28 28" aria-label="错误"><path d="M5 5 L23 23 M23 5 L5 23"/></svg></div>
+              <div class="opt is-right"><span class="key">C</span>5000 元<svg class="mark ok" viewBox="0 0 28 28" aria-label="正确"><path d="M4 15 L11 22 L25 5"/></svg></div>
+            </div>
+            <div class="after"><div class="caption-box">
+              <div class="cb-head"><b>讲解</b></div>
+              <div class="cb-body">
+                <p>3000 元是“需要附发票原件”的门槛，不是审批门槛，两个数字容易混。</p>
+                <span class="cite"><b>出处：报销制度.docx，第 3.2 条</b><br>单笔报销金额超过 <mark>5000 元</mark> 的，须经部门负责人审批后提交财务。</span>
+                <span class="kp">知识点：报销审批权限</span>
+              </div>
+            </div></div>
+          </div>
+          <div class="foot row2"><button class="btn btn-ghost">查看原文</button><button class="btn btn-primary" style="flex:1.4">下一题讲解</button></div>
+          <div class="home-ind"></div>
+        </div></div>
+        <div class="cap"><b>讲解带出处</b><p>知识库出的题，讲解必须引用原文并高亮关键句，这是 RAG 的价值，也让企业考核有据可查。“查看原文”跳到资料对应页。</p></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+<script src="assets/proto.js"></script>
+</body>
+</html>
