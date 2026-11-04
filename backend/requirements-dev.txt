@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# 仅生成字体子集时需要
+fonttools==4.68.0

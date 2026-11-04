@@ -35,8 +35,9 @@ class Settings(BaseSettings):
     input_min_chars: int = 4
     input_max_chars: int = 2000
 
-    # H5 本地调试地址；微信小程序请求不受 CORS 限制
-    cors_origins: list[str] = ["http://localhost:10086"]
+    # wx.request 不受 CORS 限制，但 wx.loadFontFace 加载字体要求 CORS，小程序来源是 servicewechat.com；
+    # localhost:10086 是 H5 本地调试地址
+    cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]
 
 
 @lru_cache
