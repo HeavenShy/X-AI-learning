@@ -82,15 +82,16 @@ input {
   display: flex;
   flex-direction: column;
 }
-/* 底部安全区（替代原型里的 home-ind） */
+/*
+ * 底部安全区（替代原型里的 home-ind）。
+ * 透明占位：真机的 Home 指示条由系统绘制，这里只让出位置，颜色跟随所在容器——
+ * 放在页面最底下就是页面底色，放进底栏（.q-foot / .result-bar …）里就是底栏的颜色。
+ * 不要给它单独上色，否则会在页面底部多出一条色块。
+ */
 .safe-bottom {
   flex: none;
   height: env(safe-area-inset-bottom);
   min-height: 8px;
-  background: var(--paper);
-}
-.safe-bottom.is-clear {
-  background: transparent;
 }
 
 /* ---------- 导航栏 ---------- */
@@ -468,8 +469,16 @@ input {
   background: var(--paper);
   border-top: 3px solid var(--ink);
 }
+/*
+ * 结果条盖在页面底部（不参与 flex 布局）：判题动画期间它藏在屏幕外，
+ * 不会提前把滚动区挤矮、留出一块空白。内容区末尾用等高的垫片保证讲解能滚到它上方。
+ */
 .result-bar {
-  flex: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
   background: var(--paper);
   border-top: 3px solid var(--ink);
   padding: 12px 16px 8px;

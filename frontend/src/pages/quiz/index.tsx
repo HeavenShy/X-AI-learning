@@ -69,14 +69,35 @@ export default function QuizPage() {
   const [picked, setPicked] = useState<string[]>([])
   const [animate, setAnimate] = useState(false)
   const [showExit, setShowExit] = useState(false)
+  /** 结果条盖在页面底部，内容区末尾垫同样的高度，讲解才能滚到它上方 */
+  const [barHeight, setBarHeight] = useState(0)
   const shownAt = useRef(Date.now())
 
-  const qid = session && !session.finished ? currentQuestion(session).id : ''
+  const live = session && !session.finished ? session : null
+  const qid = live ? currentQuestion(live).id : ''
+  const answered = !!(live && currentAnswer(live))
   useEffect(() => {
     shownAt.current = Date.now()
     setPicked([])
     setAnimate(false)
   }, [qid])
+
+  useEffect(() => {
+    if (!answered) {
+      setBarHeight(0)
+      return
+    }
+    // 结果条的高度随标题换行变化，渲染后量一次（transform 不影响高度，动画中量也准）
+    Taro.nextTick(() => {
+      Taro.createSelectorQuery()
+        .select('.result-bar')
+        .boundingClientRect((rect) => {
+          const r = Array.isArray(rect) ? rect[0] : rect
+          if (r?.height) setBarHeight(r.height)
+        })
+        .exec()
+    })
+  }, [qid, answered])
 
   useEffect(() => {
     if (!session) Taro.reLaunch({ url: '/pages/index/index' })
@@ -171,6 +192,7 @@ export default function QuizPage() {
             </View>
           )}
           <View className='quiz-pad' />
+          {result && <View className='bar-spacer' style={{ height: `${barHeight}px` }} />}
         </View>
       </ScrollView>
 
@@ -179,6 +201,7 @@ export default function QuizPage() {
           <Btn disabled={picked.length === 0} onClick={() => submit(picked)}>
             {picked.length ? `提交答案（已选 ${picked.length} 项）` : '提交答案'}
           </Btn>
+          <SafeBottom />
         </View>
       )}
 
@@ -194,10 +217,12 @@ export default function QuizPage() {
             <Text className='rb-sub'>这题不加经验值。看完讲解，{last ? '马上就通关了' : '下一格接着来'}。</Text>
           )}
           <Btn onClick={next}>{result.isCorrect ? (last ? '去结算' : '下一格') : last ? '懂了，去结算' : '懂了，下一格'}</Btn>
+          <SafeBottom />
         </View>
       )}
 
-      <SafeBottom />
+      {/* 底栏自带安全区；没有底栏时由页面底色让出安全区 */}
+      {!result && q.type !== 'multiple' && <SafeBottom />}
 
       {showExit && (
         <Dialog

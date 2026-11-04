@@ -146,6 +146,7 @@ export function Toast({ text }: { text: string }) {
   )
 }
 
-export function SafeBottom({ clear = false }: { clear?: boolean }) {
-  return <View className={`safe-bottom ${clear ? 'is-clear' : ''}`} />
+/** 底部安全区占位（透明）。有底栏的页面放进底栏里，让底栏的颜色铺满安全区 */
+export function SafeBottom() {
+  return <View className='safe-bottom' />
 }

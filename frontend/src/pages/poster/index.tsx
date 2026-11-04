@@ -157,7 +157,7 @@ export default function Poster() {
           转发给好友
         </Btn>
       </View>
-      <SafeBottom clear />
+      <SafeBottom />
       {toast && <Toast text='已保存到相册' />}
       <Canvas type='2d' id={CANVAS_ID} className='poster-canvas' style={{ width: `${POSTER_W}px`, height: `${POSTER_H}px` }} />
     </View>

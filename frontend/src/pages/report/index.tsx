@@ -179,15 +179,17 @@ export default function ReportPage() {
           <View className='report-pad' />
         </View>
       </ScrollView>
-      <View className='report-actions'>
-        <Btn className='ra-primary' disabled={!data} onClick={() => Taro.navigateTo({ url: '/pages/poster/index' })}>
-          生成分享海报
-        </Btn>
-        <Btn kind='ghost' className='ra-ghost' onClick={onAgain}>
-          再闯一轮
-        </Btn>
+      <View className='report-foot'>
+        <View className='report-actions'>
+          <Btn className='ra-primary' disabled={!data} onClick={() => Taro.navigateTo({ url: '/pages/poster/index' })}>
+            生成分享海报
+          </Btn>
+          <Btn kind='ghost' className='ra-ghost' onClick={onAgain}>
+            再闯一轮
+          </Btn>
+        </View>
+        <SafeBottom />
       </View>
-      <SafeBottom />
     </View>
   )
 }
