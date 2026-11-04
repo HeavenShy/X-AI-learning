@@ -4,6 +4,8 @@
 - quiz_prompt_v2：保守版，首次失败后重试使用：逐题写死题型、要求更简单稳妥。
 """
 
+import random
+
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -45,6 +47,16 @@ def _sequence_text(question_count: int) -> str:
     )
 
 
+def random_answer_keys(n: int) -> list[str]:
+    """按“每 4 个一轮、轮内打乱”生成单选答案位置，保证分布均匀。"""
+    keys: list[str] = []
+    while len(keys) < n:
+        block = ["A", "B", "C", "D"]
+        random.shuffle(block)
+        keys += block
+    return keys[:n]
+
+
 def _difficulty_text(difficulty: str) -> str:
     if difficulty == "mixed":
         return "难度混合：easy、medium、hard 都要出现，整体由浅入深"
@@ -54,7 +66,8 @@ def _difficulty_text(difficulty: str) -> str:
 # 注意：模板里的字面花括号要写成 {{ }}
 _COMMON_RULES = """输出规则：
 - 通过调用工具提交结果，内容是合法 JSON，不要输出 Markdown、代码块或任何额外说明。
-- 单选题、多选题各有 4 个选项，key 依次为 A、B、C、D；正确答案的位置要分散，不要总是 A。
+- 单选题、多选题各有 4 个选项，key 依次为 A、B、C、D。
+- 单选题的正确答案依次放在：{single_answer_text}（按单选题出现的先后顺序），其余选项围绕它编写。
 - 判断题只有 2 个选项，固定为 A=对、B=错，题干写成一个可以判断对错的陈述句。
 - 单选题恰好 1 个正确答案；多选题 2–4 个正确答案；判断题 1 个。
 - 每道题都要有讲解：先说正确答案为什么对，再点出容易选错的选项错在哪。语言通俗、适合手机阅读，2–4 句。
@@ -108,8 +121,12 @@ DEFAULT_QUIZ_PROMPT = "quiz_prompt_v1"
 CONSERVATIVE_QUIZ_PROMPT = "quiz_prompt_v2"
 
 
-def quiz_prompt_variables(*, user_input: str, question_count: int, difficulty: str) -> dict[str, str | int]:
+def quiz_prompt_variables(
+    *, user_input: str, question_count: int, difficulty: str, single_answer_keys: list[str] | None = None
+) -> dict[str, str | int]:
+    keys = single_answer_keys or random_answer_keys(type_plan(question_count)["single"])
     return {
+        "single_answer_text": "、".join(keys),
         "user_input": user_input,
         "question_count": question_count,
         "plan_text": _plan_text(question_count),
@@ -118,6 +135,18 @@ def quiz_prompt_variables(*, user_input: str, question_count: int, difficulty: s
     }
 
 
-def build_quiz_messages(version: str, *, user_input: str, question_count: int, difficulty: str) -> list[BaseMessage]:
-    variables = quiz_prompt_variables(user_input=user_input, question_count=question_count, difficulty=difficulty)
+def build_quiz_messages(
+    version: str,
+    *,
+    user_input: str,
+    question_count: int,
+    difficulty: str,
+    single_answer_keys: list[str] | None = None,
+) -> list[BaseMessage]:
+    variables = quiz_prompt_variables(
+        user_input=user_input,
+        question_count=question_count,
+        difficulty=difficulty,
+        single_answer_keys=single_answer_keys,
+    )
     return QUIZ_PROMPT_VERSIONS[version].format_messages(**variables)

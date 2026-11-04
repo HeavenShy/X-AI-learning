@@ -57,8 +57,26 @@ def test_conservative_prompt_lists_question_sequence():
     assert "第 3 题：judge" in text
 
 
+@pytest.mark.parametrize("version", ["quiz_prompt_v1", "quiz_prompt_v2"])
+def test_single_answer_positions_are_assigned(version):
+    messages = build_quiz_messages(
+        version, user_input="复利", question_count=5, difficulty="mixed", single_answer_keys=["C", "A", "D"]
+    )
+    assert "单选题的正确答案依次放在：C、A、D" in messages[0].content
+
+
+def test_random_answer_positions_are_balanced():
+    from app.prompts.quiz_prompt import random_answer_keys
+
+    keys = random_answer_keys(6)
+    assert len(keys) == 6
+    assert set(keys) <= {"A", "B", "C", "D"}
+    # 6 个位置里任何一个字母最多出现 2 次
+    assert max(keys.count(k) for k in "ABCD") <= 2
+
+
 @pytest.mark.parametrize(
-    "difficulty,needle", [("mixed", "混合"), ("easy", "easy"), ("hard", "hard")]
+    "difficulty,needle",[("mixed", "混合"), ("easy", "easy"), ("hard", "hard")]
 )
 def test_difficulty_hint(difficulty, needle):
     messages = build_quiz_messages("quiz_prompt_v1", user_input="复利", question_count=5, difficulty=difficulty)
