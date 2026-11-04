@@ -1,6 +1,6 @@
 # 后端（FastAPI + LangChain + DeepSeek）
 
-技术方案见根目录《方案设计文档.md》。需要 Python 3.11+（开发时用 3.13）。
+技术方案见 [docs/方案设计文档.md](../docs/方案设计文档.md)。需要 Python 3.11+（开发时用 3.13）。
 
 ## 启动
 
