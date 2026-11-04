@@ -4,8 +4,12 @@
  * WXSS 不支持 * 选择器与属性选择器，状态一律用 class（is-on / is-picked ...）。
  */
 
-page,
-:root {
+/*
+ * 设计变量。小程序挂在 page 上，H5 挂在 :root 上。
+ * 注意：必须拆成两条独立规则。WXSS 不认识 :root，若写成 `page, :root {}`，
+ * 整条规则会被丢弃，所有 var(--xxx) 失效（边框、背景、字体全部丢失，页面近乎空白）。
+ */
+@mixin design-tokens {
   --ink: #000000;
   --paper: #ffffff;
   --tone: #eef0f2;
@@ -21,6 +25,14 @@ page,
   --display: 'ZCOOL QingKe HuangYou', 'Microsoft YaHei', 'PingFang SC', sans-serif;
   --body: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --halftone: radial-gradient(circle, rgba(0, 0, 0, 0.22) 1.1px, transparent 1.5px) 0 0 / 6px 6px;
+}
+
+page {
+  @include design-tokens;
+}
+
+:root {
+  @include design-tokens;
 }
 
 page {
