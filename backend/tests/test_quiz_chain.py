@@ -7,7 +7,7 @@ from tests.factories import quiz_dict
 from tests.llm_mock import MockDeepSeek, test_settings, tool_call_response
 
 
-async def _run(mock: MockDeepSeek, **settings_overrides):
+async def _run(mock: MockDeepSeek, reference: str = "", **settings_overrides):
     settings = test_settings(**settings_overrides)
     llm = create_chat_model(
         temperature=settings.quiz_temperature,
@@ -17,7 +17,11 @@ async def _run(mock: MockDeepSeek, **settings_overrides):
     )
     generator = LangChainQuizGenerator(llm)
     return await generator.generate(
-        user_input="我想学习什么是 RAG", question_count=3, difficulty="mixed", prompt_version="quiz_prompt_v1"
+        user_input="我想学习什么是 RAG",
+        question_count=3,
+        difficulty="mixed",
+        prompt_version="quiz_prompt_v1",
+        reference=reference,
     )
 
 
@@ -53,3 +57,18 @@ async def test_thinking_mode_is_configurable():
     mock = MockDeepSeek([tool_call_response("GeneratedQuiz", quiz_dict(3))])
     await _run(mock, deepseek_thinking="enabled")
     assert mock.requests[0]["thinking"] == {"type": "enabled"}
+
+
+async def test_reference_is_sent_to_deepseek():
+    mock = MockDeepSeek([tool_call_response("GeneratedQuiz", quiz_dict(3))])
+    await _run(mock, reference="[1] RAG 简介\n检索增强生成 {先检索} 再生成")
+    human = mock.requests[0]["messages"][-1]["content"]
+    assert "<reference>" in human
+    assert "[1] RAG 简介" in human
+    assert "检索增强生成 {先检索} 再生成" in human
+
+
+async def test_no_reference_by_default():
+    mock = MockDeepSeek([tool_call_response("GeneratedQuiz", quiz_dict(3))])
+    await _run(mock)
+    assert "<reference>" not in mock.requests[0]["messages"][-1]["content"]

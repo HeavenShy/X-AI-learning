@@ -81,3 +81,57 @@ def test_generation_failure_error_code():
     client, _ = client_with([ValueError("a"), ValueError("b"), ValueError("c")])
     resp = client.post("/api/v1/quiz/generate", json={"user_input": "复利是怎么算的"})
     assert resp.json() == {"code": 4001, "message": "题库生成失败，请稍后重试", "data": None}
+
+
+# ---------- 联网检索：生命周期与注入 ----------
+
+QUIZ_FIELDS = {"quiz_id", "title", "summary", "source_type", "user_input", "questions"}
+
+
+def _app_settings(**overrides):
+    # 不连库，只看检索相关的 lifespan 行为
+    return test_settings(mysql_database="", **overrides)
+
+
+def test_no_key_means_no_web_searcher():
+    from app.api.deps import get_quiz_generator
+
+    app = create_app(_app_settings())
+    gen = FakeGenerator([generated_quiz(5)])
+    app.dependency_overrides[get_quiz_generator] = lambda: gen
+    with TestClient(app) as client:
+        assert app.state.web_searcher is None
+        resp = client.post("/api/v1/quiz/generate", json={"user_input": "复利是怎么算的"})
+    body = resp.json()
+    assert body["code"] == 0
+    assert set(body["data"]) == QUIZ_FIELDS
+    assert gen.calls[0]["reference"] == ""
+
+
+def test_key_creates_tavily_searcher():
+    from app.services.web_search import TavilySearcher
+
+    app = create_app(_app_settings(tavily_api_key="tvly-test"))
+    with TestClient(app):
+        assert isinstance(app.state.web_searcher, TavilySearcher)
+
+
+def test_web_searcher_reference_reaches_generator_and_response_is_unchanged():
+    from app.api.deps import get_quiz_generator
+    from app.services.web_search import SearchSnippet
+    from tests.test_quiz_service import FakeSearcher
+
+    app = create_app(_app_settings())
+    gen = FakeGenerator([generated_quiz(5)])
+    app.dependency_overrides[get_quiz_generator] = lambda: gen
+    searcher = FakeSearcher([SearchSnippet(title="RAG", url="https://src.example", content="检索增强生成")])
+    with TestClient(app) as client:
+        app.state.web_searcher = searcher
+        resp = client.post("/api/v1/quiz/generate", json={"user_input": "我想学习什么是 RAG"})
+        app.state.web_searcher = None
+    body = resp.json()
+    assert body["code"] == 0
+    assert set(body["data"]) == QUIZ_FIELDS
+    assert "src.example" not in resp.text
+    assert searcher.queries == ["我想学习什么是 RAG"]
+    assert "检索增强生成" in gen.calls[0]["reference"]

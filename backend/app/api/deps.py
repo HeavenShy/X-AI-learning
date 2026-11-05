@@ -8,7 +8,7 @@ from app.core.config import get_settings
 from app.core.db import Database
 from app.core.exceptions import BizError, ErrorCode
 from app.llm.langchain_factory import create_chat_model
-from app.llm.quiz_chain import LangChainQuizGenerator
+from app.llm.quiz_chain import LangChainQuizGenerator, QuizGenerator
 from app.llm.report_chain import LangChainReportGenerator
 from app.services.history_service import HistoryService
 from app.services.quiz_service import QuizService
@@ -21,10 +21,25 @@ MSG_DB_UNAVAILABLE = "用户系统暂时不可用，请稍后重试"
 
 
 @lru_cache
-def get_quiz_service() -> QuizService:
+def get_quiz_generator() -> LangChainQuizGenerator:
+    """LLM 客户端是进程级单例。"""
     s = get_settings()
     llm = create_chat_model(temperature=s.quiz_temperature, max_tokens=s.quiz_max_tokens, settings=s)
-    return QuizService(LangChainQuizGenerator(llm), settings=s, content_filter=get_content_filter())
+    return LangChainQuizGenerator(llm)
+
+
+def get_quiz_service(
+    request: Request,
+    generator: QuizGenerator = Depends(get_quiz_generator),
+    content_filter: ContentFilter = Depends(get_content_filter),
+) -> QuizService:
+    """每请求组装：检索客户端由 lifespan 挂在 app.state（没配 Key 时为 None，按原流程出题）。"""
+    return QuizService(
+        generator,
+        settings=request.app.state.settings,
+        content_filter=content_filter,
+        searcher=getattr(request.app.state, "web_searcher", None),
+    )
 
 
 @lru_cache
