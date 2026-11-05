@@ -9,7 +9,7 @@ from app.core.config import Settings
 from app.core.exceptions import BizError, ErrorCode
 from app.llm.output_schemas import GeneratedReport
 from app.llm.report_chain import ReportGenerator
-from app.models.report import Report, ReportGenerateRequest
+from app.models.report import Report, ReportGenerateRequest, ScoreSummary
 from app.prompts.report_prompt import DEFAULT_REPORT_PROMPT
 from app.services.scoring_service import score
 from app.utils.content_filter import ContentFilter
@@ -48,8 +48,9 @@ class ReportService:
         self._settings = settings
         self._filter = content_filter
 
-    async def generate(self, req: ReportGenerateRequest) -> Report:
-        summary = score(req.questions, req.answer_records)
+    async def generate(self, req: ReportGenerateRequest, summary: ScoreSummary | None = None) -> Report:
+        """summary：调用方已判好题时传入（登录用户先落库答题记录再生成报告），否则这里判题。"""
+        summary = summary or score(req.questions, req.answer_records)
         topic = clean_text(req.topic) or "本话"
         attempts = self._settings.report_max_attempts
         for attempt in range(1, attempts + 1):
