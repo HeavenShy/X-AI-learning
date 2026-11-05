@@ -1,0 +1,36 @@
+# 全仓库通用规则；后端、前端各自的规则见 backend/.gitignore、frontend/.gitignore
+
+# 密钥与本地环境配置（任何目录）。示例文件 .env.example 需要提交
+.env
+.env.*
+!.env.example
+!.env.development
+!.env.production
+!.env.test
+*.local
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# 日志与临时文件
+*.log
+logs/
+tmp/
+.temp/
+
+# Python / Node 缓存（子目录兜底）
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+
+# Claude Code 个人本地设置
+.claude

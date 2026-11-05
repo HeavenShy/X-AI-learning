@@ -35,6 +35,17 @@ class Settings(BaseSettings):
     input_min_chars: int = 4
     input_max_chars: int = 2000
 
+    # 出题前联网检索（Tavily Search）。Key 为空即关闭检索，按原流程出题
+    tavily_api_key: str = ""
+    tavily_base_url: str = "https://api.tavily.com"
+    # basic 每次 1 credit，advanced 2 credits
+    tavily_search_depth: Literal["basic", "advanced"] = "basic"
+    tavily_max_results: int = 5
+    tavily_timeout_seconds: float = 8.0
+    # 进入出题 Prompt 的参考资料：单条摘要上限 / 总长度上限（字符）
+    web_reference_item_max_chars: int = 600
+    web_reference_max_chars: int = 3000
+
     # wx.request 不受 CORS 限制，但 wx.loadFontFace 加载字体要求 CORS，小程序来源是 servicewechat.com；
     # localhost:10086 是 H5 本地调试地址
     cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]
@@ -63,6 +74,10 @@ class Settings(BaseSettings):
     @property
     def db_enabled(self) -> bool:
         return bool(self.mysql_database)
+
+    @property
+    def web_search_enabled(self) -> bool:
+        return bool(self.tavily_api_key)
 
     @property
     def wechat_mock_login(self) -> bool:

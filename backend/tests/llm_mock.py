@@ -15,6 +15,8 @@ def test_settings(**overrides: Any) -> Settings:
         deepseek_model="deepseek-flash",
         deepseek_thinking="disabled",
         llm_http_max_retries=0,
+        # 测试离线运行：即使本地 .env 配了搜索 Key 也不联网检索
+        tavily_api_key="",
     )
     base.update(overrides)
     return Settings(**base)
