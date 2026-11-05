@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.exceptions import BizError, ErrorCode
-from app.services.scoring_service import score
+from app.services.scoring_service import is_answer_correct, score
 from tests.report_factories import questions, record
 
 
@@ -106,3 +106,31 @@ def test_accuracy_rounds_half_up():
         if i >= 5:
             recs[i] = record(qs[i].id, ["Z"])
     assert score(qs, recs).accuracy == 50
+
+
+# ---------- is_answer_correct：闯关与重做错题共用 ----------
+
+
+@pytest.mark.parametrize(
+    "selected, expected",
+    [
+        (["A", "C"], True),
+        (["c", "a"], True),  # 大小写、顺序
+        ([" A ", "C "], True),  # 空格
+        (["A", "A", "C"], True),  # 重复选项
+        ([], False),  # 空选择
+        (["", "  "], False),  # 只有空白
+        (["A"], False),  # 多选漏选
+        (["A", "B", "C"], False),  # 多选多选
+    ],
+)
+def test_is_answer_correct_multiple(selected, expected):
+    multiple = questions(5)[3]
+    assert multiple.type == "multiple" and multiple.answer == ["A", "C"]
+    assert is_answer_correct(multiple, selected) is expected
+
+
+def test_is_answer_correct_single():
+    single = questions(5)[0]
+    assert is_answer_correct(single, ["a"]) is True
+    assert is_answer_correct(single, ["B"]) is False

@@ -13,6 +13,7 @@ from app.llm.report_chain import LangChainReportGenerator
 from app.services.history_service import HistoryService
 from app.services.quiz_service import QuizService
 from app.services.report_service import ReportService
+from app.services.review_service import ReviewService
 from app.services.user_service import UserService
 from app.services.wechat_auth import WeChatAuthClient
 from app.utils.content_filter import ContentFilter, get_content_filter
@@ -78,3 +79,7 @@ def get_history_service(db: Database | None = Depends(get_db)) -> HistoryService
 
 def require_history_service(db: Database = Depends(require_db)) -> HistoryService:
     return HistoryService(db)
+
+
+def require_review_service(db: Database = Depends(require_db)) -> ReviewService:
+    return ReviewService(db)

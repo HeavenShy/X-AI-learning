@@ -7,6 +7,7 @@ from tests.conftest import db_settings
 async def test_schema_creates_all_tables(sql):
     rows = sql.all("SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()")
     assert set(TABLES) <= {r["t"] for r in rows}
+    assert "review_items" in {r["t"] for r in rows}
 
 
 async def test_init_schema_is_idempotent(sql):
@@ -59,3 +60,5 @@ def test_user_tables_have_expected_unique_keys(sql):
     # 同一用户同一题库只记一次，防止重复结算经验
     assert uniques("answer_records") == {"user_id,quiz_id"}
     assert uniques("reports") == {"user_id,quiz_id"}
+    # 错题身份：question_id 只在一话内唯一
+    assert uniques("review_items") == {"user_id,quiz_id,question_id"}
