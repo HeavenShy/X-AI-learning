@@ -8,7 +8,8 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
   const baseConfig: UserConfigExport<'webpack5'> = {
     projectName: 'frontend',
     date: '2026-11-4',
-    designWidth: 750,
+    // 原型按 375 宽设计：样式里的 px 与原型 1:1，构建时换算为 rpx
+    designWidth: 375,
     deviceRatio: {
       640: 2.34 / 2,
       750: 1,

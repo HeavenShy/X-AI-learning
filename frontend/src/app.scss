@@ -1,0 +1,835 @@
+/*
+ * 一话一懂 全局样式：移植自 prototype/assets/proto.css 与 00-style-board.html。
+ * designWidth=375，所以这里的 px 与原型 1:1，构建时换算为 rpx。
+ * WXSS 不支持 * 选择器与属性选择器，状态一律用 class（is-on / is-picked ...）。
+ */
+
+/*
+ * 设计变量。小程序挂在 page 上，H5 挂在 :root 上。
+ * 注意：必须拆成两条独立规则。WXSS 不认识 :root，若写成 `page, :root {}`，
+ * 整条规则会被丢弃，所有 var(--xxx) 失效（边框、背景、字体全部丢失，页面近乎空白）。
+ */
+@mixin design-tokens {
+  --ink: #000000;
+  --paper: #ffffff;
+  --tone: #eef0f2;
+  --yellow: #ffd21f;
+  --yellow-soft: #fff4c4;
+  --red: #e5322d;
+  --red-soft: #ffe6e3;
+  --green: #14a160;
+  --green-soft: #ddf5e8;
+  --blue: #1e6fe0;
+  --muted: #5e6670;
+  --line: #b9bfc6;
+  --display: 'ZCOOL QingKe HuangYou', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --body: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --halftone: radial-gradient(circle, rgba(0, 0, 0, 0.22) 1.1px, transparent 1.5px) 0 0 / 6px 6px;
+}
+
+/* 图标 / 爆炸框 / 太阳码（由 npm run gen:icons 生成） */
+@import './styles/icons.generated';
+
+page {
+  @include design-tokens;
+}
+
+:root {
+  @include design-tokens;
+}
+
+page {
+  background: var(--tone);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+view,
+text,
+textarea,
+scroll-view,
+image,
+canvas,
+input {
+  box-sizing: border-box;
+}
+
+/* ---------- 页面骨架 ---------- */
+.screen {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tone);
+  overflow: hidden;
+}
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 16px 0;
+  display: flex;
+  flex-direction: column;
+}
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+.scroll-inner {
+  min-height: 100%;
+  padding: 6px 16px 0;
+  display: flex;
+  flex-direction: column;
+}
+/*
+ * 底部安全区（替代原型里的 home-ind）。
+ * 透明占位：真机的 Home 指示条由系统绘制，这里只让出位置，颜色跟随所在容器——
+ * 放在页面最底下就是页面底色，放进底栏（.q-foot / .result-bar …）里就是底栏的颜色。
+ * 不要给它单独上色，否则会在页面底部多出一条色块。
+ */
+.safe-bottom {
+  flex: none;
+  height: env(safe-area-inset-bottom);
+  min-height: 8px;
+}
+
+/* 标签页底部给固定定位的自定义 tabBar 留位（58px + 2.5px 边框 + 安全区），见 custom-tab-bar */
+.tabbar-space {
+  flex: none;
+  height: calc(60.5px + env(safe-area-inset-bottom));
+}
+
+/* ---------- 导航栏 ---------- */
+.navbar-wrap {
+  flex: none;
+}
+.navbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+.navbar.is-center {
+  justify-content: center;
+}
+.navbar .title {
+  font: 600 17px/1 var(--body);
+}
+.navbar .brand {
+  font: 400 22px/1 var(--display);
+}
+.navbar .back {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  margin-top: -15px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- 图标 ---------- */
+.icon {
+  flex: none;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  font: 400 22px/1 var(--display);
+  letter-spacing: 0.08em;
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  color: var(--ink);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+.btn-primary {
+  background: var(--yellow);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.btn-ghost {
+  background: var(--paper);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.btn-pressed {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.btn.is-disabled {
+  background: #ededed;
+  color: #9a9a9a;
+  border-color: #a8a8a8;
+  box-shadow: none;
+  transform: none;
+}
+.link {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- 选项五态 ---------- */
+.opt {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 50px;
+  padding: 9px 46px 9px 10px;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  font: 15.5px/1.45 var(--body);
+  position: relative;
+}
+.opt .key {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 17px/1 var(--display);
+}
+.opt.is-picked {
+  background: var(--halftone), var(--paper);
+}
+.opt.is-picked .key {
+  background: var(--ink);
+  color: #fff;
+}
+.opt.is-right {
+  background: var(--green-soft);
+}
+.opt.is-right .key {
+  background: var(--green);
+  color: #fff;
+}
+.opt.is-wrong {
+  background: var(--red-soft);
+}
+.opt.is-wrong .key {
+  background: var(--red);
+  color: #fff;
+}
+.opt.is-missed {
+  border-style: dashed;
+  border-color: var(--green);
+}
+.opt.is-missed .key {
+  border-color: var(--green);
+  color: var(--green);
+}
+.opt.is-dim {
+  color: #8a929b;
+  border-color: #a8aeb5;
+}
+.opt.is-dim .key {
+  border-color: #a8aeb5;
+}
+.opt .mark {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+}
+.opt .miss-tag {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 400 16px/1 var(--display);
+  color: var(--green);
+}
+
+/* ---------- 旁白框：知识讲解 ---------- */
+.caption-box {
+  background: var(--yellow-soft);
+  border: 2.5px solid var(--ink);
+  padding: 12px 14px 14px;
+}
+.caption-box .cb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.caption-box .cb-head .cb-title {
+  font: 400 19px/1.3 var(--display);
+}
+.caption-box .cb-toggle {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 4px 2px;
+}
+.caption-box .cb-body {
+  margin-top: 4px;
+}
+.caption-box .p {
+  display: block;
+  font-size: 14px;
+  line-height: 1.75;
+}
+.caption-box .p + .p {
+  margin-top: 6px;
+}
+.caption-box .answer {
+  font-weight: 700;
+}
+.caption-box .kp {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  padding: 1px 8px;
+}
+
+/* ---------- 对话气泡 ---------- */
+.balloon {
+  position: relative;
+  display: inline-block;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 50% / 46%;
+  padding: 10px 20px;
+  font: 400 20px/1.3 var(--display);
+}
+.balloon::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  bottom: -15px;
+  width: 18px;
+  height: 18px;
+  background: var(--paper);
+  border-right: 2.5px solid var(--ink);
+  border-bottom: 2.5px solid var(--ink);
+  transform: skewX(35deg) rotate(10deg);
+}
+
+/* ---------- 拟声词 ---------- */
+.sfx {
+  display: inline-block;
+  font: 400 54px/1 var(--display);
+  color: var(--yellow);
+  -webkit-text-stroke: 2.5px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(-8deg);
+}
+.sfx.is-gloom {
+  color: #fff;
+}
+.sfx.is-red {
+  color: var(--red);
+}
+.burst {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 100px;
+}
+.burst .burst-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+.burst .sfx {
+  position: relative;
+  font-size: 40px;
+}
+
+/* ---------- 状态条 ---------- */
+.cells {
+  display: flex;
+}
+.cells .cell {
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+}
+.cells .cell:last-child {
+  margin-right: 0;
+}
+.cells .cell.ok {
+  background: var(--green);
+}
+.cells .cell.no {
+  background: var(--red);
+}
+.cells .cell.now {
+  background: var(--yellow);
+}
+.chip-stat {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px 0 5px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  font: 400 16px/1 var(--display);
+}
+.chip-stat .icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+}
+.lvchip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  background: var(--ink);
+  color: var(--yellow);
+  font: 400 16px/1 var(--display);
+}
+.lvchip .xp {
+  width: 56px;
+  height: 8px;
+  margin-left: 8px;
+  background: #444;
+}
+.lvchip .xp .xp-fill {
+  height: 100%;
+  background: var(--yellow);
+}
+
+/* ---------- 答题页公共结构 ---------- */
+.q-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.q-top .ep {
+  font: 400 18px/1 var(--display);
+}
+.q-top .q-l {
+  display: flex;
+  align-items: center;
+}
+.q-top .q-l .chip-stat {
+  margin-left: 8px;
+}
+.q-panel {
+  position: relative;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  padding: 12px 14px 14px;
+}
+.q-panel .tag {
+  display: inline-block;
+  font: 400 15px/1 var(--display);
+  background: var(--ink);
+  color: #fff;
+  padding: 5px 8px 4px;
+}
+.q-panel .stem {
+  display: block;
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.opts .opt + .opt {
+  margin-top: 8px;
+}
+.opts {
+  margin-top: 10px;
+}
+.q-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.after {
+  margin-top: 12px;
+}
+.q-foot {
+  flex: none;
+  padding: 12px 16px 8px;
+  background: var(--paper);
+  border-top: 3px solid var(--ink);
+}
+/*
+ * 结果条盖在页面底部（不参与 flex 布局）：判题动画期间它藏在屏幕外，
+ * 不会提前把滚动区挤矮、留出一块空白。内容区末尾用等高的垫片保证讲解能滚到它上方。
+ */
+.result-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-top: 3px solid var(--ink);
+  padding: 12px 16px 8px;
+}
+.result-bar .rb-title {
+  display: block;
+  font: 400 23px/1.25 var(--display);
+}
+.result-bar .gain {
+  display: flex;
+  margin: 6px 0 10px;
+}
+.result-bar .gain .chip-stat + .chip-stat {
+  margin-left: 8px;
+}
+.result-bar .rb-sub {
+  display: block;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 2px 0 10px;
+}
+.result-bar.is-ok {
+  background: var(--green-soft);
+}
+
+/* ---------- 遮罩与弹窗 ---------- */
+.scrim {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.dialog {
+  width: 100%;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 20px 18px 18px;
+}
+.dialog .d-title {
+  display: block;
+  font: 400 26px/1.25 var(--display);
+}
+.dialog .d-text {
+  display: block;
+  font-size: 14.5px;
+  color: var(--muted);
+  margin: 6px 0 18px;
+}
+.dialog .row {
+  display: flex;
+}
+.dialog .row .btn {
+  font-size: 19px;
+  min-height: 46px;
+}
+.dialog .row .btn + .btn {
+  margin-left: 10px;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  z-index: 60;
+  background: var(--ink);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.toast .icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+}
+
+/* ---------- 判题动画（每屏一次编排，时序同原型） ---------- */
+@keyframes draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes fadein {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.anim .mark {
+  clip-path: inset(0 100% 0 0);
+  animation: draw 0.35s ease-out forwards;
+}
+.anim .m1 .mark {
+  animation-delay: 0.15s;
+}
+.anim .m2 .mark {
+  animation-delay: 0.5s;
+}
+.anim .opt.m3 {
+  opacity: 0;
+  animation: fadein 0.2s 0.85s forwards;
+}
+.anim .sfx-pop {
+  opacity: 0;
+  animation: pop 0.32s cubic-bezier(0.3, 1.6, 0.5, 1) 1.05s forwards;
+}
+.anim .result-bar {
+  transform: translateY(100%);
+  animation: up 0.3s ease-out 1.15s forwards;
+}
+
+.navbar .ic-close {
+  width: 18px;
+  height: 18px;
+}
+.navbar .ic-back {
+  width: 12px;
+  height: 20px;
+}
+.navbar .title.is-dark {
+  color: #fff;
+}
+
+/* ---------- 扩展组件（proto.css「02–04 共用」：我的 / 历史记录 / 复习） ---------- */
+.list {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+}
+.list .li {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1.5px solid #d5d9de;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.list .li:first-child {
+  border-top: 0;
+}
+.list .li > .ico,
+.list .li > .grow {
+  margin-right: 10px;
+}
+.list .grow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.list .small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 1px;
+}
+.chev {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink);
+  border-top: 2px solid var(--ink);
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+.ico {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+}
+.ico.y {
+  background: var(--yellow);
+}
+.ico .icon {
+  width: 20px;
+  height: 20px;
+}
+/* 本期未开放的入口：置灰（同首页“传文档”） */
+.list .li.is-off {
+  color: #9aa1a9;
+}
+.list .li.is-off .ico {
+  border-color: #a8aeb5;
+}
+.list .li.is-off .ico.y {
+  background: #f1f2f4;
+}
+.list .li.is-off .chev {
+  border-color: #a8aeb5;
+}
+.li-pressed {
+  background: var(--yellow-soft);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 12px;
+}
+.tabs .tab-btn {
+  font: 400 17px/1 var(--display);
+  padding: 8px 0 7px;
+  margin-right: 18px;
+  color: var(--muted);
+  margin-bottom: -2px;
+  border-bottom: 4px solid transparent;
+}
+.tabs .tab-btn.is-on {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px 40px;
+}
+.empty .frame {
+  width: 150px;
+  height: 110px;
+  border: 3px dashed var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 40px/1 var(--display);
+  color: #a8aeb5;
+  margin-bottom: 18px;
+}
+.empty .e-h3 {
+  display: block;
+  font: 400 26px/1.2 var(--display);
+}
+.empty .e-p {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 6px 0 20px;
+}
+
+.stat3 {
+  display: flex;
+}
+.stat3 .stat {
+  flex: 1;
+  min-width: 0;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.stat3 .stat + .stat {
+  margin-left: 6px;
+}
+.stat3 .stat-b {
+  display: block;
+  font: 400 26px/1.1 var(--display);
+  color: var(--ink);
+}
+
+.avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 22px/1 var(--display);
+  background: var(--yellow);
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  font-size: 15px;
+}
+.input.is-focus {
+  box-shadow: 0 0 0 3px var(--blue);
+}
+.input.is-error {
+  border-color: var(--red);
+}
+.input .input-el {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* 原生 button 做成 .btn（表单提交用）：去掉微信 button 的默认外观 */
+.form-btn {
+  margin: 0;
+  line-height: 1;
+  border-radius: 4px;
+  color: var(--ink);
+}
+.form-btn::after {
+  border: none;
+}
+

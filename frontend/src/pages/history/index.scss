@@ -1,0 +1,39 @@
+/* 历史记录（原型 03-review-and-stats.html 第 4 屏 .day / .hist） */
+.history {
+  .day {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 10px 0 6px;
+  }
+  /* 原型 .day:first-of-type：标签下面第一组不留上边距 */
+  .day.is-first {
+    margin-top: 0;
+  }
+  .hist .sc {
+    flex: none;
+    font: 400 22px/1 var(--display);
+    min-width: 44px;
+    text-align: right;
+  }
+  .hist .sc.r {
+    color: var(--red);
+  }
+  .hist .go {
+    flex: none;
+    font: 400 16px/1 var(--display);
+    border: 2px solid var(--ink);
+    background: var(--yellow);
+    padding: 5px 8px;
+  }
+  .hist-tip {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 10px 0;
+    text-align: center;
+  }
+  .hist-pad {
+    height: 16px;
+  }
+}

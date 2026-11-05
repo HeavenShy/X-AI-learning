@@ -1,3 +1,4 @@
 export default definePageConfig({
-  navigationBarTitleText: '首页'
+  navigationBarTitleText: '一话一懂',
+  disableScroll: true
 })

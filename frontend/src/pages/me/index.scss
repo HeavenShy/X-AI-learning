@@ -1,0 +1,87 @@
+/* 我的（原型 03-review-and-stats.html 第 1 屏 .me-page） */
+.me-page {
+  padding-top: 14px;
+
+  .me {
+    display: flex;
+    align-items: center;
+  }
+  .me .avatar {
+    margin-right: 14px;
+  }
+  .me .grow {
+    flex: 1;
+    min-width: 0;
+  }
+  .me-b {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font: 400 24px/1.2 var(--display);
+  }
+  .me-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .me-coin {
+    flex: none;
+    margin-left: 8px;
+    font-size: 15px;
+  }
+  .xpline {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .me-lv {
+    flex: none;
+    height: 22px;
+    font-size: 14px;
+  }
+  .xpline .track {
+    flex: 1;
+    height: 10px;
+    margin: 0 8px;
+    border: 2px solid var(--ink);
+    background: #fff;
+  }
+  .xpline .track-i {
+    height: 100%;
+    background: var(--yellow);
+  }
+  .stat3 {
+    margin-top: 20px;
+  }
+  .me-list {
+    margin-top: 16px;
+  }
+  .me-list .li {
+    padding: 12px;
+  }
+}
+
+/* 改昵称弹窗（公共 .dialog + .input） */
+.nick-dialog {
+  display: block;
+  .nick-err {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 8px;
+    font-size: 13.5px;
+    color: var(--red);
+    line-height: 1.5;
+    .icon {
+      width: 18px;
+      height: 18px;
+      margin: 1px 6px 0 0;
+    }
+  }
+  .row {
+    margin-top: 18px;
+  }
+}
