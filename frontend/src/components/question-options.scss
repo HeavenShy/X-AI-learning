@@ -1,0 +1,57 @@
+/* 作答选项（components/QuestionOptions）：闯关页、重做错题页共用。
+   单选 / 多选的选项五态与判题动画是全局样式，见 app.scss「选项五态」「判题动画」。 */
+
+/* 判断题：两块大按钮，单手拇指也好点 */
+.judge {
+  display: flex;
+  margin-top: 14px;
+}
+.judge .judge-btn {
+  position: relative;
+  flex: 1;
+  height: 150px;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.judge .judge-btn + .judge-btn {
+  margin-left: 12px;
+}
+.judge .judge-pressed {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 var(--ink);
+}
+.judge .judge-b {
+  font: 400 56px/1 var(--display);
+}
+.judge .judge-s {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+/* 判题后的反馈与单选一致 */
+.judge .judge-btn.is-right {
+  background: var(--green-soft);
+}
+.judge .judge-btn.is-wrong {
+  background: var(--red-soft);
+}
+.judge .judge-btn.is-dim {
+  color: #8a929b;
+  border-color: #a8aeb5;
+  box-shadow: none;
+}
+.judge .judge-btn.is-dim .judge-s {
+  color: #8a929b;
+}
+.judge .judge-btn .mark {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 28px;
+  height: 28px;
+}

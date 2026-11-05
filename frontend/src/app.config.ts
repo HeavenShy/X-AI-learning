@@ -9,6 +9,7 @@ export default defineAppConfig({
     'pages/poster/index',
     'pages/me/index',
     'pages/review/index',
+    'pages/review-answer/index',
     'pages/history/index'
   ],
   // 原型的标签栏样式（漫画字体、粗上边框、黄色填充图标）原生 tabBar 画不出来，用自定义 tabBar（src/custom-tab-bar）。
