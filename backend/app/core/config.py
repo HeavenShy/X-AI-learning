@@ -39,6 +39,44 @@ class Settings(BaseSettings):
     # localhost:10086 是 H5 本地调试地址
     cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]
 
+    # MySQL（用户系统持久化）。mysql_database 为空时不连库，所有接口按匿名模式工作
+    mysql_host: str = "127.0.0.1"
+    mysql_port: int = 3307
+    mysql_user: str = "yhyd"
+    mysql_password: str = ""
+    mysql_database: str = ""
+    mysql_pool_min: int = 1
+    mysql_pool_max: int = 10
+    # 启动时执行 CREATE TABLE IF NOT EXISTS
+    mysql_auto_init: bool = True
+
+    # 微信小程序登录（code2Session）
+    wechat_app_id: str = ""
+    wechat_app_secret: str = ""
+    wechat_api_base: str = "https://api.weixin.qq.com"
+    wechat_timeout_seconds: float = 8.0
+
+    # JWT
+    jwt_secret: str = ""
+    jwt_expire_days: int = 30
+
+    @property
+    def db_enabled(self) -> bool:
+        return bool(self.mysql_database)
+
+    @property
+    def wechat_mock_login(self) -> bool:
+        """开发环境没配 AppSecret 时用模拟登录：所有 code 都登录成同一个开发用户。生产环境永远走微信。"""
+        return self.app_env == "dev" and not self.wechat_app_secret
+
+    @property
+    def jwt_signing_key(self) -> str:
+        if self.jwt_secret:
+            return self.jwt_secret
+        if self.app_env == "dev":
+            return "dev-only-insecure-jwt-secret-change-me"
+        raise RuntimeError("JWT_SECRET 未配置")
+
 
 @lru_cache
 def get_settings() -> Settings:

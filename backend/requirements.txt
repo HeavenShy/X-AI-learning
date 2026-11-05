@@ -5,6 +5,11 @@ pydantic-settings==2.16.2
 langchain-core==1.7.4
 langchain-openai==1.7.3
 httpx==0.28.1
+aiomysql==0.3.2
+PyMySQL==1.2.3
+# MySQL 8 默认 caching_sha2_password 认证，PyMySQL 需要 cryptography
+cryptography==50.0.2
+PyJWT==2.15.1
 
 # 测试
 pytest==9.2.0
