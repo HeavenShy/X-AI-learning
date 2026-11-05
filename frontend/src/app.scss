@@ -94,6 +94,12 @@ input {
   min-height: 8px;
 }
 
+/* 标签页底部给固定定位的自定义 tabBar 留位（58px + 2.5px 边框 + 安全区），见 custom-tab-bar */
+.tabbar-space {
+  flex: none;
+  height: calc(60.5px + env(safe-area-inset-bottom));
+}
+
 /* ---------- 导航栏 ---------- */
 .navbar-wrap {
   flex: none;
@@ -631,3 +637,199 @@ input {
 .navbar .title.is-dark {
   color: #fff;
 }
+
+/* ---------- 扩展组件（proto.css「02–04 共用」：我的 / 历史记录 / 复习） ---------- */
+.list {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+}
+.list .li {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1.5px solid #d5d9de;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.list .li:first-child {
+  border-top: 0;
+}
+.list .li > .ico,
+.list .li > .grow {
+  margin-right: 10px;
+}
+.list .grow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.list .small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 1px;
+}
+.chev {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink);
+  border-top: 2px solid var(--ink);
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+.ico {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+}
+.ico.y {
+  background: var(--yellow);
+}
+.ico .icon {
+  width: 20px;
+  height: 20px;
+}
+/* 本期未开放的入口：置灰（同首页“传文档”） */
+.list .li.is-off {
+  color: #9aa1a9;
+}
+.list .li.is-off .ico {
+  border-color: #a8aeb5;
+}
+.list .li.is-off .ico.y {
+  background: #f1f2f4;
+}
+.list .li.is-off .chev {
+  border-color: #a8aeb5;
+}
+.li-pressed {
+  background: var(--yellow-soft);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 12px;
+}
+.tabs .tab-btn {
+  font: 400 17px/1 var(--display);
+  padding: 8px 0 7px;
+  margin-right: 18px;
+  color: var(--muted);
+  margin-bottom: -2px;
+  border-bottom: 4px solid transparent;
+}
+.tabs .tab-btn.is-on {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px 40px;
+}
+.empty .frame {
+  width: 150px;
+  height: 110px;
+  border: 3px dashed var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 40px/1 var(--display);
+  color: #a8aeb5;
+  margin-bottom: 18px;
+}
+.empty .e-h3 {
+  display: block;
+  font: 400 26px/1.2 var(--display);
+}
+.empty .e-p {
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 6px 0 20px;
+}
+
+.stat3 {
+  display: flex;
+}
+.stat3 .stat {
+  flex: 1;
+  min-width: 0;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.stat3 .stat + .stat {
+  margin-left: 6px;
+}
+.stat3 .stat-b {
+  display: block;
+  font: 400 26px/1.1 var(--display);
+  color: var(--ink);
+}
+
+.avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 400 22px/1 var(--display);
+  background: var(--yellow);
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  font-size: 15px;
+}
+.input.is-focus {
+  box-shadow: 0 0 0 3px var(--blue);
+}
+.input.is-error {
+  border-color: var(--red);
+}
+.input .input-el {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+/* 原生 button 做成 .btn（表单提交用）：去掉微信 button 的默认外观 */
+.form-btn {
+  margin: 0;
+  line-height: 1;
+  border-radius: 4px;
+  color: var(--ink);
+}
+.form-btn::after {
+  border: none;
+}
+

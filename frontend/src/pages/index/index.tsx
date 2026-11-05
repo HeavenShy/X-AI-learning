@@ -1,14 +1,17 @@
-/** 首页：原型 01 第 2（空态）、3（已输入）、4（输入有问题）屏 */
+/** 首页（底部“闯关”标签）：原型 01 第 2（空态）、3（已输入）、4（输入有问题）屏。等级、经验、金币登录后来自后端 */
 
 import { Text, Textarea, View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { useState } from 'react'
 
 import NavBar from '../../components/NavBar'
-import { Btn, Icon, LvChip, SafeBottom, StatChip } from '../../components/ui'
+import { TabBarSpace, useTabSelected } from '../../components/TabPage'
+import { Btn, Icon, LvChip, StatChip } from '../../components/ui'
 import { estimateMinutes, formatInterrupted, INPUT_MAX_CHARS, validateInput } from '../../core/format'
 import { levelOf, xpBarPercent } from '../../core/level'
 import { resumeTitle } from '../../core/session'
+import { TAB_INDEX } from '../../core/tabs'
+import { refreshProfile } from '../../services/account'
 import { useStore } from '../../store'
 import type { QuestionCount } from '../../types/api'
 import './index.scss'
@@ -25,8 +28,11 @@ export default function Index() {
   const [error, setError] = useState<string | null>(null)
   const [focused, setFocused] = useState(false)
 
+  useTabSelected(TAB_INDEX.quest)
+
   // 出题页因输入问题（太短 / 不合规）退回首页时，在输入框下方提示
   useDidShow(() => {
+    void refreshProfile()
     const { homeError, setHomeError } = useStore.getState()
     if (homeError) {
       setError(homeError)
@@ -144,7 +150,7 @@ export default function Index() {
           </Btn>
         </View>
       </View>
-      <SafeBottom />
+      <TabBarSpace />
     </View>
   )
 }

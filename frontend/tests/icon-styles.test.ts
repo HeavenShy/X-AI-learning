@@ -8,7 +8,15 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { ICON_SVGS } from '../src/assets/icons'
-import { ICON_STYLES_PATH, iconClass, IMAGE_SVGS, renderIconScss } from '../src/assets/icon-styles'
+import {
+  ICON_STYLES_PATH,
+  iconClass,
+  IMAGE_SVGS,
+  renderIconScss,
+  renderTabIconScss,
+  TAB_ICON_STYLES_PATH
+} from '../src/assets/icon-styles'
+import { TAB_ICON_SVGS } from '../src/assets/icons'
 
 const decode = (b64: string) => Buffer.from(b64, 'base64').toString('ascii')
 
@@ -39,4 +47,16 @@ test('data URI 解码后与 SVG 源一致', () => {
 test('提交的生成文件是最新的（否则运行 npm run gen:icons）', () => {
   const committed = readFileSync(join(__dirname, '..', ICON_STYLES_PATH), 'utf8').replace(/\r\n/g, '\n')
   assert.equal(committed, renderIconScss())
+})
+
+test('标签栏图标单独生成，且提交的文件是最新的', () => {
+  const scss = renderTabIconScss()
+  for (const cls of Object.keys(TAB_ICON_SVGS)) assert.ok(scss.includes(`.${cls} {`), `缺少 ${cls}`)
+  const committed = readFileSync(join(__dirname, '..', TAB_ICON_STYLES_PATH), 'utf8').replace(/\r\n/g, '\n')
+  assert.equal(committed, scss)
+})
+
+test('“我的”列表图标有黑、灰两套', () => {
+  assert.ok(renderIconScss().includes('.icon-cross-book {'))
+  assert.ok(renderIconScss().includes('.icon-cross-book-grey {'))
 })

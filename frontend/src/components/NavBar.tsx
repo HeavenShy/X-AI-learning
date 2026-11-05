@@ -42,7 +42,7 @@ export function goBackOrHome() {
 }
 
 interface NavBarProps {
-  /** brand：左侧“一话一懂”；title：居中标题；blank：只占位 */
+  /** brand：左侧品牌字（默认“一话一懂”，可用 title 换成“复习”等）；title：居中标题；blank：只占位 */
   variant?: 'brand' | 'title' | 'blank'
   title?: string
   left?: 'back' | 'close' | 'none'
@@ -73,7 +73,7 @@ export default function NavBar({ variant = 'blank', title, left = 'none', onLeft
             )}
           </View>
         )}
-        {variant === 'brand' && <Text className='brand'>一话一懂</Text>}
+        {variant === 'brand' && <Text className='brand'>{title ?? '一话一懂'}</Text>}
         {variant === 'title' && <Text className={`title ${dark ? 'is-dark' : ''}`}>{title}</Text>}
       </View>
     </View>

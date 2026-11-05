@@ -5,11 +5,12 @@
 
 import { burstSvg, sunCodeSvg, svgUri } from '../core/graphics'
 import { iconClass } from './icon-class'
-import { ICON_SVGS, type IconName } from './icons'
+import { ICON_SVGS, TAB_ICON_SVGS, type IconName } from './icons'
 
 export { iconClass }
 
 export const ICON_STYLES_PATH = 'src/styles/icons.generated.scss'
+export const TAB_ICON_STYLES_PATH = 'src/styles/tab-icons.generated.scss'
 
 /** 类名 → SVG 源 */
 export const IMAGE_SVGS: Record<string, string> = {
@@ -20,8 +21,8 @@ export const IMAGE_SVGS: Record<string, string> = {
   'img-sun-code': sunCodeSvg()
 }
 
-export function renderIconScss(): string {
-  const rules = Object.entries(IMAGE_SVGS).map(
+function renderScss(svgs: Record<string, string>): string {
+  const rules = Object.entries(svgs).map(
     ([cls, svg]) => `.${cls} {\n  background-image: url("${svgUri(svg)}");\n}\n`
   )
   return [
@@ -31,3 +32,6 @@ export function renderIconScss(): string {
     ...rules
   ].join('\n')
 }
+
+export const renderIconScss = () => renderScss(IMAGE_SVGS)
+export const renderTabIconScss = () => renderScss(TAB_ICON_SVGS)
