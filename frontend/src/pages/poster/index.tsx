@@ -1,5 +1,5 @@
 /**
- * 分享海报：原型 01 第 17、18 屏。
+ * 分享海报：原型 01 第 17、18 屏。内容由报告页（本次闯关或历史回看）写入 store.poster。
  * 页面用 View 还原预览；保存 / 转发时用隐藏的 Canvas 2D 按同一版式绘制并导出图片。
  * 按需求不放任何排名。小程序码先用太阳码占位（真码需要后端用 AppSecret 调 wxacode.getUnlimited）。
  */
@@ -10,8 +10,6 @@ import { useEffect, useRef, useState } from 'react'
 
 import NavBar from '../../components/NavBar'
 import { Btn, SafeBottom, Toast } from '../../components/ui'
-import { formatDuration } from '../../core/format'
-import { sessionStats } from '../../core/session'
 import { loadDisplayFont } from '../../services/font'
 import { drawPoster, POSTER_H, POSTER_W, type PosterData } from '../../services/poster'
 import { useStore } from '../../store'
@@ -41,31 +39,17 @@ async function renderPosterImage(data: PosterData): Promise<string> {
 const isAuthDenied = (errMsg = '') => /auth deny|auth denied|authorize no response|permission/i.test(errMsg)
 
 export default function Poster() {
-  const session = useStore((s) => s.session)
-  const report = useStore((s) => s.report)
+  const data = useStore((s) => s.poster)
   const [toast, setToast] = useState(false)
   const [busy, setBusy] = useState(false)
   const imagePath = useRef<string | null>(null)
 
-  const quote = report?.status === 'done' && report.data ? report.data.share_quote : ''
-
-  // 进入时检查一次：没有完结的会话或报告就回首页
+  // 进入时检查一次：没有海报数据（如小程序被回收后直接打开本页）就回首页
   useEffect(() => {
-    const { session: s, report: r } = useStore.getState()
-    if (!s || !s.finished || r?.status !== 'done') Taro.reLaunch({ url: '/pages/index/index' })
+    if (!useStore.getState().poster) Taro.reLaunch({ url: '/pages/index/index' })
   }, [])
 
-  if (!session || !session.finished || !quote) return <View className='screen poster-screen' />
-
-  const st = sessionStats(session)
-  const data: PosterData = {
-    episode: session.reward?.episode ?? 1,
-    title: session.quiz.title,
-    quote,
-    correct: st.correct,
-    total: st.total,
-    duration: formatDuration(st.durationMs)
-  }
+  if (!data) return <View className='screen poster-screen' />
 
   const getImage = async () => {
     if (!imagePath.current) imagePath.current = await renderPosterImage(data)

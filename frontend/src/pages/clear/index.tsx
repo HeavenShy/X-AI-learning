@@ -1,4 +1,7 @@
-/** 通关结算：原型 01 第 14 屏。进入时把本话经验金币结算进个人资料（只一次） */
+/**
+ * 通关结算：原型 01 第 14 屏。进入时把本话经验金币结算进个人资料（只一次），
+ * 并在后台开始生成复盘报告——登录用户的答题记录和经验此时就落库，即使不点“查看复盘报告”也不会丢。
+ */
 
 import { Text, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
@@ -8,6 +11,7 @@ import NavBar from '../../components/NavBar'
 import { Btn, SafeBottom, StatChip } from '../../components/ui'
 import { applyGain, levelProgressView } from '../../core/level'
 import { sessionStats } from '../../core/session'
+import { ensureReport } from '../../services/report-flow'
 import { useStore } from '../../store'
 import './index.scss'
 
@@ -21,6 +25,7 @@ export default function Clear() {
       return
     }
     useStore.getState().settleReward()
+    ensureReport()
   }, [])
 
   if (!session || !session.finished || !session.reward) return <View className='screen clear' />
