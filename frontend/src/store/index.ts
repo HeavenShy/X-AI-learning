@@ -3,15 +3,24 @@
  * - profile / me / draft / session 持久化到本地 Storage
  * - 登录后 profile（经验、金币、话数）以后端为准：启动、回到首页 / 我的、报告生成后从 /user/profile 同步；
  *   结算页仍按同一规则先在本地算出来，动画不用等接口。未登录（登录失败）时就是纯本地数据。
- * - 生成中的请求参数、待开始的题库、报告、海报数据放内存
+ * - 生成中的请求参数、待开始的题库、报告、海报数据、正在重做的错题放内存
  */
 
 import Taro from '@tarojs/taro'
 import { create } from 'zustand'
 
 import { advance, answerCurrent, createSession, sessionStats, type Session } from '../core/session'
+import type { MistakeKey } from '../core/review'
 import type { PosterData } from '../services/poster'
-import type { DifficultyOption, Profile as ServerProfile, Quiz, QuestionCount, Report, UserBrief } from '../types/api'
+import type {
+  DifficultyOption,
+  MistakeItem,
+  Profile as ServerProfile,
+  Quiz,
+  QuestionCount,
+  Report,
+  UserBrief
+} from '../types/api'
 
 export interface Profile {
   xp: number
@@ -50,6 +59,10 @@ interface State {
   /** 出题页带回首页、显示在输入框下方的错误（如内容不合规） */
   homeError: string | null
   report: ReportState | null
+  /** 复习页点开、正在重做的错题（不持久化：被系统回收后重做页回到复习页） */
+  reviewing: MistakeItem | null
+  /** 重做页刚答对、服务端已标为掌握的错题：复习页回来时先在本地去掉，再重新拉列表 */
+  reviewMastered: MistakeKey | null
 
   setDraft: (d: Partial<Draft>) => void
   setHomeError: (msg: string | null) => void
@@ -63,6 +76,8 @@ interface State {
   applyLogin: (u: UserBrief) => void
   applyProfile: (p: ServerProfile) => void
   setPoster: (p: PosterData | null) => void
+  setReviewing: (item: MistakeItem | null) => void
+  setReviewMastered: (key: MistakeKey | null) => void
 }
 
 const KEYS = { profile: 'yhyd.profile', me: 'yhyd.me', draft: 'yhyd.draft', session: 'yhyd.session' } as const
@@ -95,6 +110,8 @@ export const useStore = create<State>((set, get) => ({
   pendingQuiz: null,
   homeError: null,
   report: null,
+  reviewing: null,
+  reviewMastered: null,
 
   setDraft: (d) => set({ draft: { ...get().draft, ...d } }),
   setHomeError: (homeError) => set({ homeError }),
@@ -142,7 +159,9 @@ export const useStore = create<State>((set, get) => ({
 
   applyProfile: (p) => set({ me: p, profile: { xp: p.total_xp, coins: p.total_coins, episodes: p.quiz_count } }),
 
-  setPoster: (poster) => set({ poster })
+  setPoster: (poster) => set({ poster }),
+  setReviewing: (reviewing) => set({ reviewing }),
+  setReviewMastered: (reviewMastered) => set({ reviewMastered })
 }))
 
 // 持久化：对应字段变化时写入 Storage

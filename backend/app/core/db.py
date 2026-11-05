@@ -13,7 +13,7 @@ from app.core.config import Settings
 logger = logging.getLogger(__name__)
 
 SCHEMA_FILE = Path(__file__).resolve().parent.parent / "resources" / "schema.sql"
-TABLES = ("users", "quiz_sessions", "answer_records", "reports")
+TABLES = ("users", "quiz_sessions", "answer_records", "reports", "review_items")
 
 
 class Database:

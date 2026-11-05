@@ -9,9 +9,10 @@ import Taro from '@tarojs/taro'
 import { useEffect, useRef, useState } from 'react'
 
 import NavBar, { goBackOrHome } from '../../components/NavBar'
+import QuestionOptions from '../../components/QuestionOptions'
 import { Btn, Burst, CaptionBox, Cells, Dialog, SafeBottom, StatChip } from '../../components/ui'
 import { TYPE_LABEL } from '../../core/format'
-import { answerLine, judgeAnswer, optionVisual, resultTitle, type JudgeResult } from '../../core/judge'
+import { answerLine, judgeAnswer, resultTitle } from '../../core/judge'
 import { COINS_PER_CORRECT, XP_PER_CORRECT } from '../../core/level'
 import { cellStates, currentAnswer, currentQuestion, isLastQuestion, sessionStats } from '../../core/session'
 import { useStore } from '../../store'
@@ -22,44 +23,6 @@ const HINT: Record<Question['type'], string> = {
   single: '点一下选项就会判对错。',
   judge: '点一下就会判对错。',
   multiple: '多选题，可以选多个，选好后点提交。'
-}
-
-function Mark({ ok }: { ok: boolean }) {
-  return <View className={`mark icon ${ok ? 'icon-mark-ok' : 'icon-mark-no'}`} />
-}
-
-function AnsweredOptions({ q, r }: { q: Question; r: JudgeResult }) {
-  if (q.type === 'judge') {
-    return (
-      <View className='judge'>
-        {q.options.map((o) => {
-          const v = optionVisual(q, r, o.key)
-          return (
-            <View key={o.key} className={`judge-btn is-${v.state} m${v.order}`}>
-              <Text className='judge-b'>{o.text}</Text>
-              <Text className='judge-s'>{o.key === 'A' ? '这个说法正确' : '这个说法不对'}</Text>
-              {(v.state === 'right' || v.state === 'wrong') && <Mark ok={v.state === 'right'} />}
-            </View>
-          )
-        })}
-      </View>
-    )
-  }
-  return (
-    <View className='opts'>
-      {q.options.map((o) => {
-        const v = optionVisual(q, r, o.key)
-        return (
-          <View key={o.key} className={`opt is-${v.state} m${v.order}`}>
-            <Text className='key'>{o.key}</Text>
-            <Text>{o.text}</Text>
-            {(v.state === 'right' || v.state === 'wrong') && <Mark ok={v.state === 'right'} />}
-            {v.state === 'missed' && <Text className='miss-tag'>漏选</Text>}
-          </View>
-        )
-      })}
-    </View>
-  )
 }
 
 export default function QuizPage() {
@@ -149,34 +112,7 @@ export default function QuizPage() {
               ))}
           </View>
 
-          {result ? (
-            <AnsweredOptions q={q} r={result} />
-          ) : q.type === 'judge' ? (
-            <View className='judge'>
-              {q.options.map((o) => (
-                <View key={o.key} className='judge-btn' hoverClass='judge-pressed' onClick={() => submit([o.key])}>
-                  <Text className='judge-b'>{o.text}</Text>
-                  <Text className='judge-s'>{o.key === 'A' ? '这个说法正确' : '这个说法不对'}</Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View className='opts'>
-              {q.options.map((o) => {
-                const on = picked.includes(o.key)
-                return (
-                  <View
-                    key={o.key}
-                    className={`opt ${on ? 'is-picked' : ''}`}
-                    onClick={() => (q.type === 'single' ? submit([o.key]) : togglePick(o.key))}
-                  >
-                    <Text className='key'>{o.key}</Text>
-                    <Text>{o.text}</Text>
-                  </View>
-                )
-              })}
-            </View>
-          )}
+          <QuestionOptions q={q} result={result} picked={picked} onToggle={togglePick} onSubmit={submit} />
 
           {!result && <Text className='q-hint'>{HINT[q.type]}</Text>}
 

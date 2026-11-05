@@ -157,3 +157,37 @@ export interface QuizDetail {
   episode: number
   created_at: string
 }
+
+// ---------- 错题本（backend/app/models/review.py） ----------
+
+export interface MistakeItem {
+  quiz_id: string
+  /** 所属话的标题（列表分组标题） */
+  quiz_title: string
+  /** 完整题目（含答案与讲解）：重做时本地判题播动画，掌握状态以服务端为准 */
+  question: Question
+  /** 上次的错误答案（未作答为空数组） */
+  last_selected_answers: string[]
+  /** 累计答错次数（闯关那次算 1） */
+  wrong_count: number
+  /** 首次答错时间，ISO 8601 UTC */
+  first_wrong_at: string
+}
+
+export interface MistakeList {
+  items: MistakeItem[]
+  total: number
+}
+
+export interface ReviewAnswerRequest {
+  quiz_id: string
+  question_id: string
+  selected_answers: string[]
+}
+
+export interface ReviewAnswerResult {
+  is_correct: boolean
+  correct_answers: string[]
+  /** 提交后是否已掌握（已移出错题本） */
+  mastered: boolean
+}

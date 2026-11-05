@@ -25,8 +25,14 @@ def classify_mastery(accuracy: int) -> Literal["mastered", "normal", "weak"]:
     return "normal"
 
 
-def _normalize(keys: list[str]) -> list[str]:
+def normalize_answers(keys: list[str]) -> list[str]:
     return sorted({k.strip().upper() for k in keys if k.strip()})
+
+
+def is_answer_correct(question: Question, selected: list[str]) -> bool:
+    """闯关与重做错题共用的判题规则：去空格、不区分大小写、去重后与答案完全相同才算对；空选择算错。"""
+    normalized = normalize_answers(selected)
+    return bool(normalized) and normalized == normalize_answers(question.answer)
 
 
 def score(questions: list[Question], records: list[AnswerRecord]) -> ScoreSummary:
@@ -43,8 +49,8 @@ def score(questions: list[Question], records: list[AnswerRecord]) -> ScoreSummar
     kp_stats: dict[str, list[int]] = {}  # point -> [correct, total]，dict 保持首次出现顺序
     for q in questions:
         r = by_id.get(q.id)
-        selected = _normalize(r.selected_answers) if r else []
-        correct = bool(selected) and selected == _normalize(q.answer)
+        selected = normalize_answers(r.selected_answers) if r else []
+        correct = is_answer_correct(q, selected)
         results.append(
             QuestionResult(
                 question_id=q.id, selected_answers=selected, is_correct=correct, duration_ms=r.duration_ms if r else 0

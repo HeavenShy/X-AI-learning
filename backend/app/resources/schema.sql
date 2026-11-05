@@ -57,3 +57,18 @@ CREATE TABLE IF NOT EXISTS reports (
   PRIMARY KEY (id),
   UNIQUE KEY uk_reports_user_quiz (user_id, quiz_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='复盘报告';
+
+-- 错题本：错题本身从 answer_records 推导，这里只存重做状态（第一次重做时才写入）
+CREATE TABLE IF NOT EXISTS review_items (
+  id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id            BIGINT UNSIGNED NOT NULL,
+  quiz_id            VARCHAR(64)     NOT NULL,
+  question_id        VARCHAR(64)     NOT NULL,
+  wrong_retries      INT UNSIGNED    NOT NULL DEFAULT 0 COMMENT '重做时又答错的次数',
+  last_selected_json JSON            NULL     COMMENT '最近一次重做答错时的选项',
+  mastered_at        DATETIME(3)     NULL     COMMENT '重做答对的时间，非空即已掌握',
+  created_at         DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at         DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_review_items (user_id, quiz_id, question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='错题重做状态';

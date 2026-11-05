@@ -1,12 +1,15 @@
 import type {
   HistoryPage,
+  MistakeList,
   Profile,
   ProfileUpdate,
   Quiz,
   QuizDetail,
   QuizGenerateRequest,
   Report,
-  ReportGenerateRequest
+  ReportGenerateRequest,
+  ReviewAnswerRequest,
+  ReviewAnswerResult
 } from '../types/api'
 import { authed } from './auth'
 
@@ -26,3 +29,10 @@ export const listQuizzes = (page: number, pageSize = 20) =>
 
 export const getQuizDetail = (quizId: string) =>
   authed<QuizDetail>('GET', `/api/v1/user/quizzes/${encodeURIComponent(quizId)}`, undefined, 15_000)
+
+/** 当前用户还没掌握的错题：按话完结时间新到旧，话内按题序 */
+export const listMistakes = () => authed<MistakeList>('GET', '/api/v1/review/mistakes', undefined, 15_000)
+
+/** 重做一道错题：服务端按存档答案判题，答对即移出错题本；不发经验金币 */
+export const submitReviewAnswer = (req: ReviewAnswerRequest) =>
+  authed<ReviewAnswerResult>('POST', '/api/v1/review/answer', req, 15_000)
