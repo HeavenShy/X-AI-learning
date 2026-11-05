@@ -18,7 +18,13 @@
 
 ### 真机调试
 
-把 `.env.development` 里的 `TARO_APP_API_BASE` 改成电脑的局域网 IP，例如 `http://192.168.1.10:8000`，后端用 `--host 0.0.0.0` 启动，手机和电脑连同一个 Wi-Fi。
+不要改提交进仓库的 `.env.development`，在 `frontend/` 下新建 `.env.development.local`（已被 `*.local` 忽略，优先级更高）覆盖后端地址：
+
+```
+TARO_APP_API_BASE="http://192.168.1.10:8000"   # 换成电脑 Wi-Fi 的局域网 IP（ipconfig 查看）
+```
+
+改完重启 `npm run dev:weapp`（env 只在构建启动时读取）。后端用 `--host 0.0.0.0` 启动，手机和电脑连同一个 Wi-Fi；Windows 防火墙需放行 8000 端口。回到模拟器调试时删掉该文件即可。
 
 > iOS 上 `wx.loadFontFace` 只支持 HTTPS。HTTP 环境下漫画标题字体加载失败时，会自动退回系统粗体，不影响功能。
 
