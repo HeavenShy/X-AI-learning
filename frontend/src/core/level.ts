@@ -81,3 +81,19 @@ export function levelProgressView(r: GainResult): LevelProgressView {
     note: `经验 ${xp} / ${after.next.min}，再得 ${after.next.min - xp} 经验升到${after.next.name}。`
   }
 }
+
+export interface LevelSpan {
+  label: string
+  current: number
+  total: number
+  percent: number
+}
+
+/** “我的”页等级条：本级内进度（原型 Lv.3 配角 10 / 600）。最高级时 current 为累计经验、total 为 0 */
+export function levelSpan(xp: number): LevelSpan {
+  const lv = levelOf(xp)
+  if (!lv.next) return { label: lv.label, current: xp, total: 0, percent: 100 }
+  const total = lv.next.min - lv.min
+  const current = xp - lv.min
+  return { label: lv.label, current, total, percent: (current / total) * 100 }
+}
