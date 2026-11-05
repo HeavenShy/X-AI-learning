@@ -61,4 +61,8 @@ def test_error_code_values_are_stable():
     assert ErrorCode.INPUT_TOO_SHORT == 4002
     assert ErrorCode.CONTENT_NOT_ALLOWED == 4003
     assert ErrorCode.REPORT_GENERATE_FAILED == 4004
+    assert ErrorCode.UNAUTHORIZED == 4010
+    assert ErrorCode.LOGIN_FAILED == 4011
+    assert ErrorCode.NICKNAME_NOT_ALLOWED == 4012
+    assert ErrorCode.NOT_FOUND == 4040
     assert ErrorCode.INTERNAL_ERROR == 5000
