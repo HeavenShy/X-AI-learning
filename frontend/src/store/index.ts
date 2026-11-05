@@ -1,14 +1,17 @@
 /**
  * 全局状态（Zustand）。
- * - profile / draft / session 持久化到本地 Storage（MVP 无账号体系）
- * - 生成中的请求参数、待开始的题库、报告放内存
+ * - profile / me / draft / session 持久化到本地 Storage
+ * - 登录后 profile（经验、金币、话数）以后端为准：启动、回到首页 / 我的、报告生成后从 /user/profile 同步；
+ *   结算页仍按同一规则先在本地算出来，动画不用等接口。未登录（登录失败）时就是纯本地数据。
+ * - 生成中的请求参数、待开始的题库、报告、海报数据放内存
  */
 
 import Taro from '@tarojs/taro'
 import { create } from 'zustand'
 
 import { advance, answerCurrent, createSession, sessionStats, type Session } from '../core/session'
-import type { DifficultyOption, Quiz, QuestionCount, Report } from '../types/api'
+import type { PosterData } from '../services/poster'
+import type { DifficultyOption, Profile as ServerProfile, Quiz, QuestionCount, Report, UserBrief } from '../types/api'
 
 export interface Profile {
   xp: number
@@ -36,6 +39,10 @@ export interface ReportState {
 
 interface State {
   profile: Profile
+  /** 后端用户资料（登录后才有） */
+  me: ServerProfile | null
+  /** 海报页要画的内容：报告页（本次或历史）进入海报前写入 */
+  poster: PosterData | null
   draft: Draft
   session: Session | null
   genRequest: GenRequest | null
@@ -53,9 +60,12 @@ interface State {
   next: () => void
   settleReward: () => void
   setReport: (r: ReportState | null) => void
+  applyLogin: (u: UserBrief) => void
+  applyProfile: (p: ServerProfile) => void
+  setPoster: (p: PosterData | null) => void
 }
 
-const KEYS = { profile: 'yhyd.profile', draft: 'yhyd.draft', session: 'yhyd.session' } as const
+const KEYS = { profile: 'yhyd.profile', me: 'yhyd.me', draft: 'yhyd.draft', session: 'yhyd.session' } as const
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -77,6 +87,8 @@ function save(key: string, value: unknown) {
 
 export const useStore = create<State>((set, get) => ({
   profile: load<Profile>(KEYS.profile, { xp: 0, coins: 0, episodes: 0 }),
+  me: load<ServerProfile | null>(KEYS.me, null),
+  poster: null,
   draft: load<Draft>(KEYS.draft, { text: '', count: 5 }),
   session: load<Session | null>(KEYS.session, null),
   genRequest: null,
@@ -117,12 +129,26 @@ export const useStore = create<State>((set, get) => ({
     })
   },
 
-  setReport: (report) => set({ report })
+  setReport: (report) => set({ report }),
+
+  /** 登录接口只返回基础资料：先更新经验金币，统计数据等 applyProfile */
+  applyLogin: (u) => {
+    const { me, profile } = get()
+    set({
+      profile: { ...profile, xp: u.total_xp, coins: u.total_coins },
+      me: me && me.id === u.id ? { ...me, ...u } : null
+    })
+  },
+
+  applyProfile: (p) => set({ me: p, profile: { xp: p.total_xp, coins: p.total_coins, episodes: p.quiz_count } }),
+
+  setPoster: (poster) => set({ poster })
 }))
 
 // 持久化：对应字段变化时写入 Storage
 useStore.subscribe((state, prev) => {
   if (state.profile !== prev.profile) save(KEYS.profile, state.profile)
+  if (state.me !== prev.me) save(KEYS.me, state.me)
   if (state.draft !== prev.draft) save(KEYS.draft, state.draft)
   if (state.session !== prev.session) save(KEYS.session, state.session)
 })

@@ -33,16 +33,29 @@ export interface Pending<T> {
   abort: () => void
 }
 
-/** POST JSON，后端统一返回 {code, message, data}；可中止 */
-export function post<T>(path: string, data: unknown, timeout: number): Pending<T> {
+export type Method = 'GET' | 'POST' | 'PUT'
+
+export interface SendOptions {
+  method: Method
+  path: string
+  data?: unknown
+  timeout: number
+  /** 有值时带上 Authorization: Bearer <token> */
+  token?: string | null
+}
+
+/** 发一次请求。后端统一返回 {code, message, data}；可中止。登录态处理见 services/auth.ts */
+export function send<T>({ method, path, data, timeout, token }: SendOptions): Pending<T> {
   let task: Taro.RequestTask<ApiEnvelope<T>> | null = null
   let aborted = false
+  const header: Record<string, string> = { 'content-type': 'application/json' }
+  if (token) header.Authorization = `Bearer ${token}`
   const promise = new Promise<T>((resolve, reject) => {
     task = Taro.request<ApiEnvelope<T>>({
       url: `${API_BASE}${path}`,
-      method: 'POST',
+      method,
       data: data as Record<string, unknown>,
-      header: { 'content-type': 'application/json' },
+      header,
       timeout,
       success: (res) => {
         const body = res.data
