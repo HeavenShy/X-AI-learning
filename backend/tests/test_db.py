@@ -75,6 +75,8 @@ def test_user_tables_have_expected_unique_keys(sql):
     assert uniques("reports") == {"user_id,quiz_id"}
     # 错题身份：question_id 只在一话内唯一
     assert uniques("review_items") == {"user_id,quiz_id,question_id"}
+    # 学习结论缓存：每人每档一条
+    assert uniques("stats_insights") == {"user_id,range_key"}
     assert uniques("knowledge_bases") == {"kb_id"}
     assert uniques("kb_documents") == {"document_id"}
     assert uniques("kb_chunks") == set()

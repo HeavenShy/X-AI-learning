@@ -18,3 +18,19 @@ def week_start_utc(now_utc: datetime) -> datetime:
 
 def iso_utc(dt: datetime) -> str:
     return dt.replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def to_cn(dt_utc: datetime) -> datetime:
+    """库里的 naive UTC → 带时区的北京时间。"""
+    return dt_utc.replace(tzinfo=timezone.utc).astimezone(CN_TZ)
+
+
+def to_utc_naive(dt: datetime) -> datetime:
+    """带时区的时间 → 库里用的 naive UTC。"""
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def month_start_utc(now_utc: datetime) -> datetime:
+    """北京时间本月 1 日 0 点（UTC naive）。"""
+    local = to_cn(now_utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return to_utc_naive(local)

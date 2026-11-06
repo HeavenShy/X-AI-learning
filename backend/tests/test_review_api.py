@@ -193,7 +193,9 @@ def test_redo_gives_no_rewards_and_keeps_history(api):
     assert mistakes(api, token)["total"] == 0
     profile = api.get("/user/profile", token).json()["data"]
     assert (profile["total_xp"], profile["total_coins"]) == (before_profile["total_xp"], before_profile["total_coins"])
-    assert profile == before_profile
+    # 唯一的变化：错题都掌握了，错题本入口的数字归零
+    assert before_profile["mistake_count"] == 2
+    assert profile == {**before_profile, "mistake_count": 0}
     assert api.get("/user/quizzes", token).json()["data"] == before_history
     assert api.get(f"/user/quizzes/{quiz['quiz_id']}", token).json()["data"] == before_detail
 

@@ -10,6 +10,7 @@ from app.core.auth import optional_user_id
 from app.core.config import get_settings
 from app.core.db import Database
 from app.core.exceptions import BizError, ErrorCode
+from app.llm.insight_chain import InsightGenerator, LangChainInsightGenerator
 from app.llm.kb_quiz_chain import KbQuizGenerator, LangChainKbQuizGenerator
 from app.llm.langchain_factory import create_chat_model
 from app.llm.quiz_chain import LangChainQuizGenerator, QuizGenerator
@@ -23,12 +24,15 @@ from app.services.kb_service import KbService
 from app.services.quiz_service import QuizService
 from app.services.report_service import ReportService
 from app.services.review_service import ReviewService
+from app.services.stats_service import StatsService
 from app.services.user_service import UserService
 from app.services.wechat_auth import WeChatAuthClient
 from app.utils.content_filter import ContentFilter, get_content_filter
 
 MSG_DB_UNAVAILABLE = "用户系统暂时不可用，请稍后重试"
 MSG_KB_UNAVAILABLE = "知识库功能暂时不可用，请稍后重试"
+# 学习结论只要一两句话
+INSIGHT_MAX_TOKENS = 400
 
 
 @lru_cache
@@ -130,6 +134,21 @@ def get_history_service(db: Database | None = Depends(get_db)) -> HistoryService
 
 def require_history_service(db: Database = Depends(require_db)) -> HistoryService:
     return HistoryService(db)
+
+
+@lru_cache
+def get_insight_generator() -> LangChainInsightGenerator:
+    s = get_settings()
+    llm = create_chat_model(temperature=s.report_temperature, max_tokens=INSIGHT_MAX_TOKENS, settings=s)
+    return LangChainInsightGenerator(llm)
+
+
+def require_stats_service(
+    db: Database = Depends(require_db),
+    generator: InsightGenerator = Depends(get_insight_generator),
+    content_filter: ContentFilter = Depends(get_content_filter),
+) -> StatsService:
+    return StatsService(db, generator, content_filter=content_filter)
 
 
 def require_review_service(db: Database = Depends(require_db)) -> ReviewService:

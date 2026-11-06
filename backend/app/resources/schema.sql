@@ -74,6 +74,18 @@ CREATE TABLE IF NOT EXISTS review_items (
   UNIQUE KEY uk_review_items (user_id, quiz_id, question_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='错题重做状态';
 
+-- 学习数据页的 AI 结论缓存：统计数据指纹不变就直接复用
+CREATE TABLE IF NOT EXISTS stats_insights (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id    BIGINT UNSIGNED NOT NULL,
+  range_key  VARCHAR(8)      NOT NULL COMMENT 'week / month / all',
+  data_hash  CHAR(40)        NOT NULL COMMENT '统计数据指纹（sha1）',
+  insight    VARCHAR(255)    NOT NULL,
+  updated_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_stats_insights (user_id, range_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学习数据 AI 结论缓存';
+
 -- 知识库：资料文本以 MySQL 为准，向量存在嵌入式 Chroma（可从 kb_chunks 重建）
 CREATE TABLE IF NOT EXISTS knowledge_bases (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

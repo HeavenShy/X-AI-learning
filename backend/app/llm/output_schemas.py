@@ -83,3 +83,10 @@ class GeneratedKbQuiz(BaseModel):
     summary: str = Field(description="一句话概括这组题覆盖了资料里的哪些内容，不超过 50 字")
     questions: list[GeneratedKbQuestion] = Field(description="题目列表")
 
+
+class GeneratedInsight(BaseModel):
+    """提交一句写在学习数据图表下面的学习结论。"""
+
+    insight: str = Field(
+        description="一到两句话、不超过 60 字：先点出这段时间最容易错的地方（引用给出的数字），再给一个下次马上能做的具体做法"
+    )

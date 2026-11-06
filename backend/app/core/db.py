@@ -19,6 +19,7 @@ TABLES = (
     "answer_records",
     "reports",
     "review_items",
+    "stats_insights",
     "knowledge_bases",
     "kb_documents",
     "kb_chunks",
