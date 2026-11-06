@@ -163,7 +163,7 @@ class KbQuizService:
             if background:
                 kwargs["background"] = background
             generated = await self._generator.generate(**kwargs)
-            plain = strip_sources(generated.title, generated.summary, generated.questions)
+            plain = strip_sources(generated.title, generated.summary, generated.questions, topic=generated.topic)
             content = normalize_quiz(plain, req.question_count)
             # 出处只能指向资料片段（背景资料不编号），每题必须有
             return attach_sources(content, generated.questions, pieces)

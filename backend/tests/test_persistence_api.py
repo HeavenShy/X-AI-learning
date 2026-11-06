@@ -54,7 +54,7 @@ def test_logged_in_generate_saves_quiz_session(api, sql):
 
 def test_generate_response_shape_is_unchanged(api):
     token, _ = api.login()
-    assert set(generate(api, token)) == {"quiz_id", "title", "summary", "source_type", "user_input", "questions"}
+    assert set(generate(api, token)) == {"quiz_id", "title", "summary", "topic", "source_type", "user_input", "questions"}
 
 
 # ---------- 报告 ----------

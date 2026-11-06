@@ -90,7 +90,7 @@ def test_generation_failure_error_code():
 
 # ---------- 联网检索：生命周期与注入 ----------
 
-QUIZ_FIELDS = {"quiz_id", "title", "summary", "source_type", "user_input", "questions"}
+QUIZ_FIELDS = {"quiz_id", "title", "summary", "topic", "source_type", "user_input", "questions"}
 
 
 def _app_settings(**overrides):

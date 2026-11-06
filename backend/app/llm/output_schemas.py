@@ -8,6 +8,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+TOPIC_VOCABULARY = "AI 技术、编程、理财、职场、健康、生活常识、科学、历史、语言、心理、艺术"
+TOPIC_DESCRIPTION = (
+    f"这一话所属的大类主题，用于把用户学过的内容归类。优先从这些词里选一个：{TOPIC_VOCABULARY}；"
+    "都不合适时再自拟一个 2–6 个字的大类名（是领域，不是这一话的标题）"
+)
+
+
 class GeneratedOption(BaseModel):
     key: str = Field(description="选项字母：选择题依次为 A、B、C、D；判断题固定 A=对、B=错")
     text: str = Field(description="选项内容，简短清楚")
@@ -27,6 +34,7 @@ class GeneratedQuiz(BaseModel):
     """提交一组用于小程序闯关答题的题目。"""
 
     title: str = Field(description="这一话的主题名，2–12 个字，例如“RAG 入门”")
+    topic: str = Field(default="", description=TOPIC_DESCRIPTION)
     summary: str = Field(description="一句话概括这组题覆盖了哪些内容，不超过 50 字")
     questions: list[GeneratedQuestion] = Field(description="题目列表")
 
@@ -55,6 +63,7 @@ class GeneratedQuizWithSources(BaseModel):
     """提交一组用于小程序闯关答题的题目；依据资料片段出的题标明出处片段。"""
 
     title: str = Field(description="这一话的主题名，2–12 个字，例如“RAG 入门”")
+    topic: str = Field(default="", description=TOPIC_DESCRIPTION)
     summary: str = Field(description="一句话概括这组题覆盖了哪些内容，不超过 50 字")
     questions: list[GeneratedQuestionWithSources] = Field(description="题目列表")
 
@@ -70,6 +79,7 @@ class GeneratedKbQuiz(BaseModel):
     """提交一组依据用户资料出的闯关题目，每道题都标明出处片段。"""
 
     title: str = Field(description="这一话的主题名，2–12 个字，概括资料片段讲的内容")
+    topic: str = Field(default="", description=TOPIC_DESCRIPTION)
     summary: str = Field(description="一句话概括这组题覆盖了资料里的哪些内容，不超过 50 字")
     questions: list[GeneratedKbQuestion] = Field(description="题目列表")
 

@@ -67,6 +67,17 @@ class Database:
         await self._pool.wait_closed()
 
 
+# 已存在的表不会被 CREATE TABLE IF NOT EXISTS 更新：后加的列在这里登记，启动时缺哪列补哪列
+ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
+    (
+        "quiz_sessions",
+        "topic",
+        "ALTER TABLE quiz_sessions ADD COLUMN topic VARCHAR(16) NOT NULL DEFAULT '' "
+        "COMMENT '大类主题（知识树分组），空串即“其他”' AFTER difficulty",
+    ),
+)
+
+
 def schema_statements() -> list[str]:
     lines = [ln for ln in SCHEMA_FILE.read_text(encoding="utf-8").splitlines() if not ln.lstrip().startswith("--")]
     return [s.strip() for s in "\n".join(lines).split(";") if s.strip()]
@@ -79,5 +90,18 @@ async def init_schema(db: Database) -> None:
         async with db.transaction() as cur:
             for stmt in schema_statements():
                 await cur.execute(stmt)
+            await ensure_columns(cur)
     logger.info("database schema ready")
 
+
+async def ensure_columns(cur: aiomysql.DictCursor) -> None:
+    """给旧库补上后加的列（幂等）。"""
+    for table, column, ddl in ADDED_COLUMNS:
+        await cur.execute(
+            "SELECT COUNT(*) AS n FROM information_schema.COLUMNS "
+            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+            (table, column),
+        )
+        if (await cur.fetchone())["n"] == 0:
+            await cur.execute(ddl)
+            logger.info("added column %s.%s", table, column)

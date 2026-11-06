@@ -234,11 +234,14 @@ def _quote_for(piece: MaterialPiece, model_quote: str) -> str:
 _SOURCE_FIELDS = {"source_ids", "source_quote"}
 
 
-def strip_sources(title: str, summary: str, questions: Sequence[GeneratedQuestion]) -> GeneratedQuiz:
+def strip_sources(
+    title: str, summary: str, questions: Sequence[GeneratedQuestion], *, topic: str = ""
+) -> GeneratedQuiz:
     """去掉题目里的 source_ids / source_quote，得到交给 normalize_quiz 的普通题库。"""
     return GeneratedQuiz(
         title=title,
         summary=summary,
+        topic=topic,
         questions=[GeneratedQuestion.model_validate(q.model_dump(exclude=_SOURCE_FIELDS)) for q in questions],
     )
 

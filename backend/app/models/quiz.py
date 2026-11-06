@@ -51,6 +51,8 @@ class QuizContent(BaseModel):
     title: str
     summary: str
     questions: list[Question]
+    # 大类主题（知识树分组），AI 没给时为“其他”
+    topic: str = "其他"
 
 
 class Quiz(QuizContent):

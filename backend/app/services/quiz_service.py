@@ -158,7 +158,7 @@ class QuizService:
             if not pieces:
                 return normalize_quiz(generated, req.question_count)
             content = normalize_quiz(
-                strip_sources(generated.title, generated.summary, generated.questions), req.question_count
+                strip_sources(generated.title, generated.summary, generated.questions, topic=generated.topic), req.question_count
             )
             # 首页出题不要求每题都有出处：无效编号只丢弃
             return attach_sources(content, generated.questions, pieces, required=False)

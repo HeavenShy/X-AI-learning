@@ -11,8 +11,18 @@ _TRUE_WORDS = {"对", "正确", "是", "√", "✓", "true", "t", "yes", "y", "r
 _FALSE_WORDS = {"错", "错误", "否", "×", "✗", "x", "false", "f", "no", "n", "wrong"}
 
 
+TOPIC_MAX_CHARS = 8
+DEFAULT_TOPIC = "其他"
+
+
 class QuizValidationError(ValueError):
     pass
+
+
+def normalize_topic(raw: str | None) -> str:
+    """主题只用于知识树分组：压缩空白、去掉引号书名号、截断，空则归“其他”。从不因主题触发重试。"""
+    topic = " ".join((raw or "").split()).strip("“”‘’\"'《》「」")
+    return topic[:TOPIC_MAX_CHARS].strip() or DEFAULT_TOPIC
 
 
 def _require_text(value: str, field: str, where: str) -> str:
@@ -90,4 +100,4 @@ def normalize_quiz(quiz: GeneratedQuiz, expected_count: int) -> QuizContent:
                 difficulty=q.difficulty,
             )
         )
-    return QuizContent(title=title, summary=summary, questions=questions)
+    return QuizContent(title=title, summary=summary, questions=questions, topic=normalize_topic(quiz.topic))

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS quiz_sessions (
   summary        TEXT            NOT NULL,
   user_input     TEXT            NOT NULL COMMENT '原始输入（清洗后）',
   difficulty     VARCHAR(16)     NOT NULL DEFAULT 'mixed',
+  topic          VARCHAR(16)     NOT NULL DEFAULT '' COMMENT '大类主题（知识树分组），空串即“其他”',
   question_count INT UNSIGNED    NOT NULL,
   questions_json JSON            NOT NULL COMMENT '题目（含答案与讲解）',
   created_at     DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

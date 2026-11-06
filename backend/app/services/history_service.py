@@ -14,6 +14,7 @@ from app.models.report import AnswerRecord, Report, ScoreSummary
 from app.models.user import HistoryItem, HistoryPage, QuizDetail, Reward
 from app.repositories import quiz_repository as quizzes
 from app.repositories import user_repository as users
+from app.services.quiz_validator import DEFAULT_TOPIC
 from app.utils.timeutil import iso_utc, utcnow
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class HistoryService:
                 summary=quiz.summary,
                 user_input=quiz.user_input,
                 difficulty=difficulty,
+                topic=quiz.topic,
                 questions=[q.model_dump() for q in quiz.questions],
                 now=now or utcnow(),
             )
@@ -123,6 +125,7 @@ class HistoryService:
                 summary=quiz["summary"],
                 user_input=quiz["user_input"],
                 questions=questions,
+                topic=quiz["topic"] or DEFAULT_TOPIC,
                 # quiz_sessions 没有来源列：任一题带出处即为知识库出题
                 source_type=source_type_of(questions),
             ),

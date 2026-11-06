@@ -79,3 +79,18 @@ def test_user_tables_have_expected_unique_keys(sql):
     assert uniques("kb_documents") == {"document_id"}
     assert uniques("kb_chunks") == set()
 
+
+async def test_init_schema_adds_topic_column_to_old_quiz_sessions(sql):
+    # 模拟上线前的旧库：没有 topic 列，且已有数据
+    sql.execute("ALTER TABLE quiz_sessions DROP COLUMN topic")
+    sql.execute(
+        "INSERT INTO quiz_sessions (quiz_id, user_id, title, summary, user_input, question_count, questions_json) "
+        "VALUES ('quiz_old', 1, '旧的一话', '', '', 0, '[]')"
+    )
+    db = await Database.connect(db_settings())
+    try:
+        await init_schema(db)
+        await init_schema(db)
+    finally:
+        await db.close()
+    assert sql.one("SELECT title, topic FROM quiz_sessions WHERE quiz_id = 'quiz_old'") == {"title": "旧的一话", "topic": ""}
