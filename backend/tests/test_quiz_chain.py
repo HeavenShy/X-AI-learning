@@ -1,5 +1,7 @@
 """出题链路契约测试：真实的 ChatPromptTemplate + ChatOpenAI + with_structured_output，只把 HTTP 换成模拟。"""
 
+import json
+
 from app.llm.langchain_factory import create_chat_model
 from app.llm.output_schemas import GeneratedQuiz
 from app.llm.quiz_chain import LangChainQuizGenerator
@@ -72,3 +74,53 @@ async def test_no_reference_by_default():
     mock = MockDeepSeek([tool_call_response("GeneratedQuiz", quiz_dict(3))])
     await _run(mock)
     assert "<reference>" not in mock.requests[0]["messages"][-1]["content"]
+
+
+# ---------- 带知识库资料时改用 GeneratedQuizWithSources ----------
+
+
+async def _run_with_materials(mock: MockDeepSeek, materials: str):
+    settings = test_settings()
+    llm = create_chat_model(
+        temperature=settings.quiz_temperature,
+        max_tokens=settings.quiz_max_tokens,
+        settings=settings,
+        http_async_client=mock.client(),
+    )
+    return await LangChainQuizGenerator(llm).generate(
+        user_input="报销审批流程",
+        question_count=3,
+        difficulty="mixed",
+        prompt_version="quiz_prompt_v1",
+        materials=materials,
+    )
+
+
+def _with_sources(count: int = 3) -> dict:
+    data = quiz_dict(count)
+    data["questions"][0]["source_ids"] = [2]
+    data["questions"][0]["source_quote"] = "报销需部门经理审批"
+    return data
+
+
+async def test_without_materials_tool_is_still_generated_quiz():
+    mock = MockDeepSeek([tool_call_response("GeneratedQuiz", quiz_dict(3))])
+    await _run(mock)
+    body = mock.requests[0]
+    assert [t["function"]["name"] for t in body["tools"]] == ["GeneratedQuiz"]
+    props = body["tools"][0]["function"]["parameters"]
+    assert "source_ids" not in json.dumps(props)
+
+
+async def test_materials_switch_to_schema_with_sources():
+    from app.llm.output_schemas import GeneratedQuizWithSources
+
+    mock = MockDeepSeek([tool_call_response("GeneratedQuizWithSources", _with_sources())])
+    result = await _run_with_materials(mock, "[1] 《报销制度.pdf》\n……\n\n[2] 《报销制度.pdf》\n报销需部门经理审批。")
+    assert isinstance(result, GeneratedQuizWithSources)
+    assert result.questions[0].source_ids == [2]
+    # 没用到资料的题出处为空，不影响解析
+    assert result.questions[1].source_ids == [] and result.questions[1].source_quote == ""
+    body = mock.requests[0]
+    assert body["tool_choice"]["function"]["name"] == "GeneratedQuizWithSources"
+    assert "<materials>" in body["messages"][-1]["content"]

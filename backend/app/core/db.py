@@ -13,7 +13,16 @@ from app.core.config import Settings
 logger = logging.getLogger(__name__)
 
 SCHEMA_FILE = Path(__file__).resolve().parent.parent / "resources" / "schema.sql"
-TABLES = ("users", "quiz_sessions", "answer_records", "reports", "review_items")
+TABLES = (
+    "users",
+    "quiz_sessions",
+    "answer_records",
+    "reports",
+    "review_items",
+    "knowledge_bases",
+    "kb_documents",
+    "kb_chunks",
+)
 
 
 class Database:
@@ -71,3 +80,4 @@ async def init_schema(db: Database) -> None:
             for stmt in schema_statements():
                 await cur.execute(stmt)
     logger.info("database schema ready")
+

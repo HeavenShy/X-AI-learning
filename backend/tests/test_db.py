@@ -10,6 +10,19 @@ async def test_schema_creates_all_tables(sql):
     assert "review_items" in {r["t"] for r in rows}
 
 
+async def test_schema_creates_knowledge_base_tables(sql):
+    rows = sql.all("SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()")
+    assert {"knowledge_bases", "kb_documents", "kb_chunks"} <= {r["t"] for r in rows}
+    # 重复执行幂等，且不清掉已有数据
+    sql.execute("INSERT INTO knowledge_bases (kb_id, user_id, name) VALUES ('kb_x', 1, '甲')")
+    db = await Database.connect(db_settings())
+    try:
+        await init_schema(db)
+    finally:
+        await db.close()
+    assert sql.one("SELECT name FROM knowledge_bases WHERE kb_id = 'kb_x'")["name"] == "甲"
+
+
 async def test_init_schema_is_idempotent(sql):
     db = await Database.connect(db_settings())
     try:
@@ -62,3 +75,7 @@ def test_user_tables_have_expected_unique_keys(sql):
     assert uniques("reports") == {"user_id,quiz_id"}
     # 错题身份：question_id 只在一话内唯一
     assert uniques("review_items") == {"user_id,quiz_id,question_id"}
+    assert uniques("knowledge_bases") == {"kb_id"}
+    assert uniques("kb_documents") == {"document_id"}
+    assert uniques("kb_chunks") == set()
+

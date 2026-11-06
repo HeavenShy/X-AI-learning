@@ -196,3 +196,23 @@ def test_redo_gives_no_rewards_and_keeps_history(api):
     assert profile == before_profile
     assert api.get("/user/quizzes", token).json()["data"] == before_history
     assert api.get(f"/user/quizzes/{quiz['quiz_id']}", token).json()["data"] == before_detail
+
+
+def test_mistakes_carry_question_sources(api, sql):
+    from tests.test_history_api import SOURCE, rewrite_questions
+
+    token, _ = api.login()
+    quiz = finish(api, token)
+    rewrite_questions(sql, quiz["quiz_id"], lambda q: q.update(sources=[SOURCE]))
+    items = mistakes(api, token)["items"]
+    assert [i["question"]["sources"] for i in items] == [[SOURCE], [SOURCE]]
+
+
+def test_old_mistakes_without_sources_still_listed(api, sql):
+    from tests.test_history_api import rewrite_questions
+
+    token, _ = api.login()
+    quiz = finish(api, token)
+    rewrite_questions(sql, quiz["quiz_id"], lambda q: q.pop("sources", None))
+    items = mistakes(api, token)["items"]
+    assert [i["question"]["sources"] for i in items] == [[], []]

@@ -12,7 +12,12 @@ from app.core.config import Settings, get_settings
 from app.core.db import Database, init_schema
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import register_request_logging, setup_logging
+from app.rag.embedding import SiliconFlowEmbedder
+from app.rag.vector_store import ChromaVectorStore
+from app.repositories import kb_repository
+from app.services.kb_ingest import KbIngestor
 from app.services.web_search import TavilySearcher
+from app.utils.content_filter import get_content_filter
 from app.services.wechat_auth import MockWeChatAuth, WeChatAuth
 
 logger = logging.getLogger(__name__)
@@ -21,6 +26,76 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 # Windows 等环境的 mimetypes 不一定认识字体后缀；content-type 不对时 wx.loadFontFace 会解析失败
 mimetypes.add_type("font/woff", ".woff")
 mimetypes.add_type("font/ttf", ".ttf")
+
+
+async def _recover_documents(db: Database) -> None:
+    """上次进程退出时还在处理中的资料标为失败（处理任务在进程内，重启即中断）。"""
+    try:
+        async with db.transaction() as cur:
+            n = await kb_repository.fail_interrupted(cur)
+    except Exception:  # noqa: BLE001 —— 恢复失败不影响启动
+        logger.exception("recover processing documents failed")
+        return
+    if n:
+        logger.warning("%d 份处理中的资料因进程重启被标为失败", n)
+
+
+def _clear_upload_dir(path: Path) -> None:
+    if not path.is_dir():
+        return
+    for f in path.iterdir():
+        if f.is_file():
+            try:
+                f.unlink()
+            except OSError:
+                logger.warning("remove stale upload %s failed", f.name)
+
+
+def _start_kb(app: FastAPI, settings: Settings) -> list:
+    """创建知识库组件（测试可预先在 app.state 放假实现）。返回需要在关闭时释放的对象。"""
+    state = app.state
+    owned: list = []
+    if state.db is None:
+        logger.warning("数据库不可用，知识库功能关闭")
+        return owned
+    if not settings.kb_enabled:
+        logger.info("未配置 SILICONFLOW_API_KEY，知识库功能关闭")
+        return owned
+    try:
+        if state.embedder is None:
+            state.embedder = SiliconFlowEmbedder(settings)
+            owned.append(state.embedder)
+        if state.vector_store is None:
+            Path(settings.chroma_path).mkdir(parents=True, exist_ok=True)
+            state.vector_store = ChromaVectorStore(settings.chroma_path, model=settings.embedding_model)
+            owned.append(state.vector_store)
+        state.kb_ingestor = KbIngestor(
+            state.db,
+            settings=settings,
+            embedder=state.embedder,
+            vector_store=state.vector_store,
+            content_filter=state.content_filter or get_content_filter(),
+        )
+    except Exception:  # noqa: BLE001 —— 向量库打不开时其余功能照常，知识库接口返回 5000
+        logger.exception("知识库初始化失败，知识库功能关闭")
+        state.kb_ingestor = None
+        state.vector_store = None
+        return owned
+    logger.info("知识库已开启（%s，向量库 %s）", settings.embedding_model, settings.chroma_path)
+    return owned
+
+
+async def _close_kb(app: FastAPI, owned: list) -> None:
+    if app.state.kb_ingestor is not None:
+        await app.state.kb_ingestor.aclose()
+    for obj in owned:
+        try:
+            if hasattr(obj, "aclose"):
+                await obj.aclose()
+            elif hasattr(obj, "close"):
+                obj.close()
+        except Exception:  # noqa: BLE001
+            logger.exception("close %s failed", type(obj).__name__)
 
 
 @asynccontextmanager
@@ -49,9 +124,15 @@ async def lifespan(app: FastAPI):
     else:
         app.state.web_searcher = None
         logger.info("未配置 TAVILY_API_KEY，出题不联网检索")
+
+    if app.state.db is not None:
+        await _recover_documents(app.state.db)
+    _clear_upload_dir(Path(settings.kb_upload_dir))
+    kb_owned = _start_kb(app, settings)
     try:
         yield
     finally:
+        await _close_kb(app, kb_owned)
         if app.state.web_searcher is not None:
             await app.state.web_searcher.aclose()
         await app.state.wechat.aclose()
@@ -67,6 +148,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.db = None
     app.state.wechat = None
     app.state.web_searcher = None
+    # 知识库组件：lifespan 里创建；测试可在启动前放入假实现（embedder / vector_store / content_filter）
+    app.state.embedder = None
+    app.state.vector_store = None
+    app.state.kb_ingestor = None
+    app.state.content_filter = None
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

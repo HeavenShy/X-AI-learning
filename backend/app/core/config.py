@@ -46,6 +46,53 @@ class Settings(BaseSettings):
     web_reference_item_max_chars: int = 600
     web_reference_max_chars: int = 3000
 
+    # 知识库（RAG）。硅基流动 Key 为空即关闭知识库功能，所有知识库接口返回 5000 / 503
+    siliconflow_api_key: str = ""
+    siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
+    embedding_model: str = "BAAI/bge-m3"
+    # bge-m3 输出 1024 维；返回维度不符视为 Embedding 失败
+    embedding_dimensions: int = 1024
+    # 单次请求的文本条数（硅基流动 /embeddings 的 input 数组上限为 32）
+    embedding_batch_size: int = 32
+    embedding_timeout_seconds: float = 30.0
+    # 相对后端工作目录；backend/data/ 不纳入版本管理
+    chroma_path: str = "data/chroma"
+    # 上传文件的临时目录，处理结束即删除；启动时清空
+    kb_upload_dir: str = "data/uploads"
+    kb_max_bases: int = 10
+    # 每个用户所有知识库合计的资料数上限
+    kb_max_documents: int = 50
+    kb_max_file_bytes: int = 20 * 1024 * 1024
+    # 提取出的可见字符上限，超过判为“内容太长”
+    kb_max_chars: int = 300000
+    kb_chunk_chars: int = 500
+    kb_chunk_overlap: int = 80
+    # 带重点出题时向量检索的片段数
+    kb_retrieve_top_k: int = 12
+    # 交给模型的材料总长度上限（字符）
+    kb_material_max_chars: int = 6000
+    # 同时处理的资料数（解析 + 向量化）
+    kb_process_concurrency: int = 2
+
+    # 出题前的检索规划 Agent：由模型决定查知识库 / 联网 / 都查 / 都不查。关掉即回到固定规则
+    # （首页出题固定联网一次、不查知识库；知识库出题固定取材、不联网）
+    agent_retrieval_enabled: bool = True
+    # 知识库出题时是否允许 Agent 联网查背景资料（只作背景，不作出题依据）
+    agent_web_in_kb_quiz: bool = True
+    # 一次请求内：模型调用轮数 / 工具执行总次数 / 其中联网次数（控制 Tavily 用量）
+    agent_max_rounds: int = 3
+    agent_max_tool_calls: int = 4
+    agent_max_web_searches: int = 2
+    # 每次知识库检索取的片段数
+    agent_kb_top_k: int = 6
+    # 整个检索规划的总超时（秒），超时按规划失败处理、退回固定规则
+    agent_timeout_seconds: float = 20.0
+    agent_temperature: float = 0.1
+    agent_max_tokens: int = 800
+    # Agent 写的查询词长度上限（字符）
+    agent_web_query_max_chars: int = 100
+    agent_kb_query_max_chars: int = 200
+
     # wx.request 不受 CORS 限制，但 wx.loadFontFace 加载字体要求 CORS，小程序来源是 servicewechat.com；
     # localhost:10086 是 H5 本地调试地址
     cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]
@@ -78,6 +125,11 @@ class Settings(BaseSettings):
     @property
     def web_search_enabled(self) -> bool:
         return bool(self.tavily_api_key)
+
+    @property
+    def kb_enabled(self) -> bool:
+        """配置了 Embedding Key 才开启知识库；接口可用还要求数据库可用（见 require_kb）。"""
+        return bool(self.siliconflow_api_key)
 
     @property
     def wechat_mock_login(self) -> bool:

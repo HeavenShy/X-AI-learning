@@ -72,3 +72,51 @@ CREATE TABLE IF NOT EXISTS review_items (
   PRIMARY KEY (id),
   UNIQUE KEY uk_review_items (user_id, quiz_id, question_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='错题重做状态';
+
+-- 知识库：资料文本以 MySQL 为准，向量存在嵌入式 Chroma（可从 kb_chunks 重建）
+CREATE TABLE IF NOT EXISTS knowledge_bases (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  kb_id      VARCHAR(64)     NOT NULL COMMENT '业务 kb_id',
+  user_id    BIGINT UNSIGNED NOT NULL,
+  name       VARCHAR(64)     NOT NULL,
+  created_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_knowledge_bases_kb_id (kb_id),
+  KEY idx_knowledge_bases_user (user_id, updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='知识库';
+
+CREATE TABLE IF NOT EXISTS kb_documents (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  document_id VARCHAR(64)     NOT NULL COMMENT '业务 document_id',
+  kb_id       VARCHAR(64)     NOT NULL,
+  user_id     BIGINT UNSIGNED NOT NULL,
+  filename    VARCHAR(255)    NOT NULL,
+  file_type   VARCHAR(8)      NOT NULL COMMENT 'pdf / docx / txt / md',
+  size_bytes  INT UNSIGNED    NOT NULL,
+  status      VARCHAR(16)     NOT NULL DEFAULT 'processing' COMMENT 'processing / ready / failed',
+  fail_reason VARCHAR(255)    NULL,
+  page_count  INT UNSIGNED    NULL     COMMENT '仅 PDF',
+  char_count  INT UNSIGNED    NOT NULL DEFAULT 0,
+  chunk_count INT UNSIGNED    NOT NULL DEFAULT 0,
+  created_at  DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at  DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_kb_documents_document_id (document_id),
+  KEY idx_kb_documents_kb (kb_id, created_at),
+  KEY idx_kb_documents_user (user_id),
+  KEY idx_kb_documents_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='知识库资料';
+
+-- 自增 id 同时作为 Chroma 中的向量 id
+CREATE TABLE IF NOT EXISTS kb_chunks (
+  id          BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  document_id VARCHAR(64)      NOT NULL,
+  user_id     BIGINT UNSIGNED  NOT NULL,
+  seq         INT UNSIGNED     NOT NULL COMMENT '资料内顺序，从 0 开始',
+  page        INT UNSIGNED     NULL     COMMENT 'PDF 页码，从 1 开始',
+  text        TEXT             NOT NULL,
+  flagged     TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '命中敏感词，不参与出题',
+  PRIMARY KEY (id),
+  KEY idx_kb_chunks_document (document_id, seq)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='资料文本片段';

@@ -11,6 +11,12 @@ PyMySQL==1.2.3
 cryptography==50.0.2
 PyJWT==2.15.1
 
+# 知识库（RAG）：嵌入式向量库、文档解析、multipart 上传
+chromadb==1.5.9
+pypdf==6.21.4
+python-docx==1.2.0
+python-multipart==0.0.33
+
 # 测试
 pytest==9.2.0
 pytest-asyncio==1.4.1.post1

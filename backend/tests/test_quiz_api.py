@@ -31,8 +31,13 @@ def test_generate_quiz_success():
     assert data["quiz_id"].startswith("quiz_")
     assert data["title"] == "RAG 入门"
     assert len(data["questions"]) == 5
+    assert data["source_type"] == "text"
     q = data["questions"][0]
-    assert set(q) == {"id", "type", "stem", "options", "answer", "explanation", "knowledge_point", "difficulty"}
+    assert set(q) == {
+        "id", "type", "stem", "options", "answer", "explanation", "knowledge_point", "difficulty", "sources",
+    }
+    # 文本出题没有出处：每题 sources 为空列表
+    assert all(question["sources"] == [] for question in data["questions"])
 
 
 def test_default_question_count_is_five():
@@ -135,3 +140,102 @@ def test_web_searcher_reference_reaches_generator_and_response_is_unchanged():
     assert "src.example" not in resp.text
     assert searcher.queries == ["我想学习什么是 RAG"]
     assert "检索增强生成" in gen.calls[0]["reference"]
+
+
+# ---------- 检索规划 Agent 端到端：MockDeepSeek 依次返回规划响应和出题响应 ----------
+
+
+def _agent_kb_api(kb_api, responses: list[dict]):
+    """kb_api 上改用真实的 get_quiz_service：检索规划与出题都走 LangChain + 同一个 MockDeepSeek。"""
+    from app.api.deps import get_quiz_generator, get_retrieval_llm
+    from app.llm.langchain_factory import create_chat_model
+    from app.llm.quiz_chain import LangChainQuizGenerator
+    from tests.llm_mock import MockDeepSeek
+
+    mock = MockDeepSeek(responses)
+    settings = kb_api.app.state.settings
+    settings.agent_retrieval_enabled = True
+    client = mock.client()
+    llm = create_chat_model(temperature=0.1, max_tokens=800, settings=settings, http_async_client=client)
+    overrides = kb_api.app.dependency_overrides
+    overrides.pop(get_quiz_service)
+    overrides[get_retrieval_llm] = lambda: llm
+    overrides[get_quiz_generator] = lambda: LangChainQuizGenerator(llm)
+    return mock
+
+
+def _quiz_with_sources(first_source_ids: list[int]) -> dict:
+    from tests.factories import quiz_dict
+
+    data = quiz_dict(5)
+    for i, q in enumerate(data["questions"]):
+        q["source_ids"] = first_source_ids if i == 0 else []
+        q["source_quote"] = ""
+    return data
+
+
+def test_home_quiz_using_kb_materials_has_consistent_source_type(kb_api):
+    from tests.llm_mock import text_response, tool_call_response, tool_calls_response
+    from tests.test_kb_api import ready_kb
+    from tests.test_persistence_api import submit
+
+    token, _ = kb_api.login("u1")
+    ready_kb(kb_api, token)
+    mock = _agent_kb_api(
+        kb_api,
+        [
+            tool_calls_response([("search_knowledge_base", {"query": "报销审批"})]),
+            text_response(),
+            tool_call_response("GeneratedQuizWithSources", _quiz_with_sources([1])),
+        ],
+    )
+    body = kb_api.post("/quiz/generate", {"user_input": "报销审批流程是怎样的", "question_count": 5}, token).json()
+    assert body["code"] == 0, body
+    quiz = body["data"]
+    assert quiz["source_type"] == "knowledge_base"
+    assert quiz["questions"][0]["sources"][0]["document_name"] == "报销制度.txt"
+    assert all(q["sources"] == [] for q in quiz["questions"][1:])
+    # 规划 2 轮 + 出题 1 次；第 1 次请求绑定的是知识库工具（没配搜索 Key，不能联网）
+    assert len(mock.requests) == 3
+    assert [t["function"]["name"] for t in mock.requests[0]["tools"]] == ["search_knowledge_base"]
+    assert "<materials>" in mock.requests[2]["messages"][-1]["content"]
+    assert submit(kb_api, quiz, token)["code"] == 0
+    detail = kb_api.get(f"/user/quizzes/{quiz['quiz_id']}", token).json()["data"]
+    assert detail["quiz"]["source_type"] == quiz["source_type"] == "knowledge_base"
+    assert detail["quiz"]["questions"][0]["sources"] == quiz["questions"][0]["sources"]
+
+
+def test_home_quiz_not_using_materials_stays_text(kb_api):
+    from tests.factories import quiz_dict
+    from tests.llm_mock import text_response, tool_call_response
+    from tests.test_kb_api import ready_kb
+    from tests.test_persistence_api import submit
+
+    token, _ = kb_api.login("u1")
+    ready_kb(kb_api, token)
+    mock = _agent_kb_api(kb_api, [text_response(), tool_call_response("GeneratedQuiz", quiz_dict(5))])
+    body = kb_api.post("/quiz/generate", {"user_input": "勾股定理是什么", "question_count": 5}, token).json()
+    assert body["code"] == 0, body
+    quiz = body["data"]
+    assert quiz["source_type"] == "text"
+    assert [t["function"]["name"] for t in mock.requests[1]["tools"]] == ["GeneratedQuiz"]
+    assert submit(kb_api, quiz, token)["code"] == 0
+    detail = kb_api.get(f"/user/quizzes/{quiz['quiz_id']}", token).json()["data"]
+    assert detail["quiz"]["source_type"] == "text"
+
+
+def test_anonymous_home_quiz_never_touches_kb(kb_api):
+    from tests.factories import quiz_dict
+    from tests.llm_mock import tool_call_response
+    from tests.test_kb_api import ready_kb
+
+    token, _ = kb_api.login("u1")
+    ready_kb(kb_api, token)
+    embed_calls = len(kb_api.embedder.calls)
+    # 未登录且没配搜索 Key：没有可用数据源，不运行规划，直接出题
+    mock = _agent_kb_api(kb_api, [tool_call_response("GeneratedQuiz", quiz_dict(5))])
+    body = kb_api.post("/quiz/generate", {"user_input": "报销审批流程是怎样的", "question_count": 5}).json()
+    assert body["code"] == 0, body
+    assert body["data"]["source_type"] == "text"
+    assert len(mock.requests) == 1
+    assert len(kb_api.embedder.calls) == embed_calls

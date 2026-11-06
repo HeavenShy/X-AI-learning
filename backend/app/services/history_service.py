@@ -23,6 +23,10 @@ COINS_PER_CORRECT = 5
 MSG_NOT_FOUND = "没找到这一话的记录"
 
 
+def source_type_of(questions: list[Question]) -> str:
+    return "knowledge_base" if any(q.sources for q in questions) else "text"
+
+
 def reward_for(correct_count: int) -> Reward:
     return Reward(xp=correct_count * XP_PER_CORRECT, coins=correct_count * COINS_PER_CORRECT)
 
@@ -111,13 +115,16 @@ class HistoryService:
             episode = await quizzes.episode_number(cur, user_id, record["created_at"]) if record else 0
         if not quiz or quiz["user_id"] != user_id or not record:
             raise BizError(ErrorCode.NOT_FOUND, MSG_NOT_FOUND)
+        questions = [Question.model_validate(q) for q in quiz["questions"]]
         return QuizDetail(
             quiz=Quiz(
                 quiz_id=quiz["quiz_id"],
                 title=quiz["title"],
                 summary=quiz["summary"],
                 user_input=quiz["user_input"],
-                questions=quiz["questions"],
+                questions=questions,
+                # quiz_sessions 没有来源列：任一题带出处即为知识库出题
+                source_type=source_type_of(questions),
             ),
             difficulty=quiz["difficulty"],
             answer_records=[AnswerRecord.model_validate(r) for r in record["results"]],
