@@ -57,10 +57,13 @@ python -m scripts.smoke_quiz # 真模型冒烟：连续出题 10 次 + 生成 1 
 | `POST /api/v1/quiz/generate` | 生成题库。`user_input`（≤2000 字）、`question_count`（3 / 5 / 10，默认 5）、`difficulty`（mixed / easy / medium / hard）。带 token 时题库存入 `quiz_sessions`。出题前由检索规划 Agent 决定是否联网、是否查当前用户的知识库（见「出题前的检索规划」）；依据知识库资料出的题带 `sources`，此时 `source_type=knowledge_base` |
 | `POST /api/v1/report/generate` | 生成复盘报告。传入题目与答题记录，后端重新判题并统计。带 token 且题库是本人出的：用库里的题目判题，先写答题记录并结算经验金币，再生成 AI 复盘并存档（见下） |
 | `POST /api/v1/user/login` | 微信登录：`{code}`（wx.login 拿到）→ `{token, user}`。首次登录自动注册 |
-| `GET /api/v1/user/profile` | 档案：昵称、头像、经验、金币、已学话数、答对题数、总正确率、本周分钟 |
+| `GET /api/v1/user/profile` | 档案：昵称、头像、经验、金币、已学话数、答对题数、总正确率、本周分钟、未掌握错题数 `mistake_count`、主题数 `topic_count` |
 | `PUT /api/v1/user/profile` | 改昵称（1–20 字，过敏感词）/ 头像地址（https，本期前端不上传） |
 | `GET /api/v1/user/quizzes?page=1&page_size=10` | 闯关历史（已完结的话），最近的在前，`page_size` ≤ 50 |
 | `GET /api/v1/user/quizzes/{quiz_id}` | 某一话的完整题目、答题记录、奖励、复盘报告（AI 失败时为 null）、第几话 |
+| `GET /api/v1/user/stats?range=week\|month\|all` | 学习数据：时长分桶与上一周期对比、单选 / 多选 / 判断正确率、漏选次数、最弱知识点（北京时间） |
+| `GET /api/v1/user/stats/insight?range=…` | 图表下的一句 AI 结论；数据没变走 `stats_insights` 缓存，没数据或生成失败为 null |
+| `GET /api/v1/user/knowledge-tree` | 知识树：已完结的话按出题时 AI 给的主题分组（空主题归“其他”），带正确率与答错的知识点 |
 
 ### 知识库
 
