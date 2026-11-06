@@ -10,6 +10,16 @@ export interface Option {
   text: string
 }
 
+/** 知识库出题的出处快照（资料删除后仍随题目保留） */
+export interface QuestionSource {
+  document_id: string
+  document_name: string
+  /** PDF 有页码；Word / TXT / Markdown 为 null */
+  page: number | null
+  /** 不超过 120 字的原文摘录 */
+  quote: string
+}
+
 export interface Question {
   id: string
   type: QuestionType
@@ -19,13 +29,17 @@ export interface Question {
   explanation: string
   knowledge_point: string
   difficulty: Difficulty
+  /** 知识库出的题至少 1 项；文本出题为空数组。可选：本地存的旧闯关进度没有这个字段 */
+  sources?: QuestionSource[]
 }
+
+export type SourceType = 'text' | 'knowledge_base'
 
 export interface Quiz {
   quiz_id: string
   title: string
   summary: string
-  source_type: 'text'
+  source_type: SourceType
   user_input: string
   questions: Question[]
 }
@@ -87,6 +101,14 @@ export const ErrorCode = {
   UNAUTHORIZED: 4010,
   LOGIN_FAILED: 4011,
   NICKNAME_NOT_ALLOWED: 4012,
+  /** 知识库：文件类型不支持 */
+  FILE_TYPE_NOT_SUPPORTED: 4020,
+  /** 知识库：文件为空或超过 20 MB */
+  FILE_SIZE_INVALID: 4021,
+  /** 知识库：超出数量上限（知识库 10 个 / 资料 50 份） */
+  LIMIT_EXCEEDED: 4022,
+  /** 知识库：所选资料都还没准备好 */
+  NO_READY_DOCUMENTS: 4023,
   NOT_FOUND: 4040,
   INTERNAL_ERROR: 5000,
   /** 前端自定义：网络不通 / 超时 */
@@ -191,3 +213,57 @@ export interface ReviewAnswerResult {
   /** 提交后是否已掌握（已移出错题本） */
   mastered: boolean
 }
+
+// ---------- 知识库（backend/app/models/kb.py） ----------
+
+export type DocumentStatus = 'processing' | 'ready' | 'failed'
+export type KbFileType = 'pdf' | 'docx' | 'txt' | 'md'
+
+export interface KnowledgeBase {
+  kb_id: string
+  name: string
+  document_count: number
+  /** 可出题（ready）的资料数 */
+  ready_count: number
+  /** ISO 8601 UTC */
+  created_at: string
+  updated_at: string
+}
+
+export interface KbList {
+  items: KnowledgeBase[]
+  total: number
+  /** 所有知识库合计的资料数与上限 */
+  document_total: number
+  document_limit: number
+}
+
+export interface KbDocument {
+  document_id: string
+  filename: string
+  file_type: KbFileType
+  size_bytes: number
+  status: DocumentStatus
+  /** 仅失败时有 */
+  fail_reason: string | null
+  /** 仅 PDF 有 */
+  page_count: number | null
+  char_count: number
+  /** 上传时间，ISO 8601 UTC */
+  created_at: string
+}
+
+export interface KbDetail {
+  knowledge_base: KnowledgeBase
+  documents: KbDocument[]
+}
+
+export interface KbQuizRequest {
+  /** 为空：该库全部资料 */
+  document_ids: string[]
+  /** 想重点学什么（选填，≤200 字） */
+  focus: string
+  question_count: QuestionCount
+  difficulty: DifficultyOption
+}
+

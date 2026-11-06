@@ -78,6 +78,13 @@
       margin-right: 4px;
     }
   }
+  .in-tool.is-on {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  .in-tool-pressed {
+    background: var(--yellow-soft);
+  }
   .in-count {
     font-size: 12px;
     color: #8a929b;

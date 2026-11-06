@@ -1,6 +1,6 @@
 /**
  * 我的：原型 03 第 1 屏（pages/me）。
- * 顶部身份和等级，三个数字回答“我学了多少”；列表里本期只开放“历史记录”，其余入口置灰。
+ * 顶部身份和等级，三个数字回答“我学了多少”；列表里开放“历史记录”“我的知识库”，其余入口置灰。
  * 点头像或昵称可以改昵称（微信“头像昵称填写能力”：type=nickname 的输入框）。
  */
 
@@ -38,7 +38,7 @@ const ENTRIES: Entry[] = [
   { icon: 'treeGrey', text: '知识树' },
   { icon: 'clock', text: '历史记录', url: '/pages/history/index' },
   { icon: 'crossBookGrey', text: '错题本' },
-  { icon: 'folderGrey', text: '我的知识库' },
+  { icon: 'folder', text: '我的知识库', url: '/pages/kb-list/index' },
   { icon: 'crownGrey', text: '会员', yellow: true }
 ]
 

@@ -8,7 +8,7 @@ import Taro from '@tarojs/taro'
 
 import { withReauth } from '../core/reauth'
 import { ErrorCode, type LoginResponse } from '../types/api'
-import { ApiError, send, type Method, type Pending } from './request'
+import { ApiError, send, upload, type Method, type Pending } from './request'
 
 const TOKEN_KEY = 'yhyd.token'
 const LOGIN_TIMEOUT = 15_000
@@ -72,17 +72,20 @@ export async function ensureLogin(): Promise<string | null> {
 
 const isUnauthorized = (e: unknown) => e instanceof ApiError && e.code === ErrorCode.UNAUTHORIZED
 
-/** 带登录态的请求：自动附加 token，过期时重登一次再重发；可中止 */
-export function authed<T>(method: Method, path: string, data: unknown, timeout: number): Pending<T> {
+/** 用 token 发一次请求的工厂：重登后会用新 token 再调用一次 */
+type Sender<T> = (token: string | null) => Pending<T>
+
+/** 带登录态：自动附加 token，过期（4010）时重登一次再重发；可中止 */
+function withAuth<T>(sender: Sender<T>): Pending<T> {
   let current: Pending<T> | null = null
   let aborted = false
   const attempt = async (token: string | null) => {
     if (aborted) throw new ApiError(ErrorCode.ABORTED, '已取消')
-    current = send<T>({ method, path, data, timeout, token })
+    current = sender(token)
     return current.promise
   }
   const promise = (async () => {
-    // 刚启动时登录可能还在路上：等它完成，避免这次出题没带上 token、没被保存
+    // 刚启动时登录可能还在路上：等它完成，避免这次请求没带上 token
     if (!getToken() && inflight) await inflight
     return withReauth(attempt, {
       getToken,
@@ -100,4 +103,14 @@ export function authed<T>(method: Method, path: string, data: unknown, timeout: 
       current?.abort()
     }
   }
+}
+
+/** 带登录态的请求。allowEmpty：成功时 data 可以为 null（删除类接口） */
+export function authed<T>(method: Method, path: string, data: unknown, timeout: number, allowEmpty = false): Pending<T> {
+  return withAuth((token) => send<T>({ method, path, data, timeout, token, allowEmpty }))
+}
+
+/** 带登录态的文件上传（multipart，字段名 file） */
+export function authedUpload<T>(path: string, filePath: string, timeout: number): Pending<T> {
+  return withAuth((token) => upload<T>({ path, filePath, name: 'file', timeout, token }))
 }

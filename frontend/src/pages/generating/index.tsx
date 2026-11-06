@@ -1,6 +1,8 @@
 /**
  * 出题中 / 出题失败：原型 01 第 5、6 屏。
  * 后端是一次性返回，三步进度按预计时长在前端推进；结果回来时全部完成。
+ * 知识库出题（genRequest.kb）调知识库出题接口，步骤换成“读取资料 / 找到相关片段 / 出题并写讲解”；
+ * 资料未就绪（4023）或重点不合规（4003）时回到出题设置页提示。
  */
 
 import { Text, View } from '@tarojs/components'
@@ -10,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import NavBar, { goBackOrHome } from '../../components/NavBar'
 import { Btn, SafeBottom } from '../../components/ui'
 import { displayTopic, planText } from '../../core/format'
-import { generateQuiz } from '../../services/api'
+import { generateKbQuiz, generateQuiz } from '../../services/api'
 import { ApiError, type Pending } from '../../services/request'
 import { useStore } from '../../store'
 import { ErrorCode, type Quiz } from '../../types/api'
@@ -52,7 +54,14 @@ export default function Generating() {
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 1)), 1200))
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 2)), Math.max(2400, expected * 0.45)))
 
-    const p = generateQuiz({ user_input: req.text, question_count: req.count, difficulty: req.difficulty })
+    const p = req.kb
+      ? generateKbQuiz(req.kb.kbId, {
+          document_ids: req.kb.documentIds,
+          focus: req.text,
+          question_count: req.count,
+          difficulty: req.difficulty
+        })
+      : generateQuiz({ user_input: req.text, question_count: req.count, difficulty: req.difficulty })
     pending.current = p
     p.promise
       .then((quiz) => {
@@ -64,6 +73,17 @@ export default function Generating() {
       .catch((err: ApiError) => {
         clearTimers()
         if (err.code === ErrorCode.ABORTED) return
+        // 知识库：资料没准备好 / 重点不合规 / 库被删了，回到出题设置页提示
+        if (
+          req.kb &&
+          (err.code === ErrorCode.NO_READY_DOCUMENTS ||
+            err.code === ErrorCode.CONTENT_NOT_ALLOWED ||
+            err.code === ErrorCode.NOT_FOUND)
+        ) {
+          useStore.getState().setKbError(err.message)
+          goBackOrHome()
+          return
+        }
         // 输入类问题回到首页，在输入框下方提示（原型第 4 屏）
         if (err.code === ErrorCode.INPUT_TOO_SHORT || err.code === ErrorCode.CONTENT_NOT_ALLOWED) {
           useStore.getState().setHomeError(err.message)
@@ -90,11 +110,18 @@ export default function Generating() {
   }
 
   const stepState = (i: number): StepState => (step > i ? 'done' : step === i ? 'doing' : 'wait')
-  const steps = [
-    { title: '理解你想学什么', sub: `主题：${displayTopic(req.text).slice(0, 14)}` },
-    { title: '补充相关知识', sub: '定义、原理、易错点和应用场景' },
-    { title: '出题并写讲解', sub: planText(req.count) }
-  ]
+  const focus = displayTopic(req.text)
+  const steps = req.kb
+    ? [
+        { title: '读取资料', sub: `知识库：${req.kb.kbName.slice(0, 14)}` },
+        { title: '找到相关片段', sub: focus ? `围绕：${focus.slice(0, 14)}` : '从资料前中后均匀挑选' },
+        { title: '出题并写讲解', sub: `${planText(req.count)}，每题标出处` }
+      ]
+    : [
+        { title: '理解你想学什么', sub: `主题：${focus.slice(0, 14)}` },
+        { title: '补充相关知识', sub: '定义、原理、易错点和应用场景' },
+        { title: '出题并写讲解', sub: planText(req.count) }
+      ]
   const ST_TEXT: Record<StepState, string> = { done: '完成', doing: '进行中', wait: '等待' }
 
   return (
@@ -102,7 +129,16 @@ export default function Generating() {
       <NavBar variant='title' title='出题中' left={phase === 'failed' ? 'back' : 'none'} />
       <View className='content'>
         <View className='gen-quote'>
-          你想学：<Text className='gen-quote-b'>{displayTopic(req.text)}</Text>
+          {req.kb ? (
+            <>
+              用知识库出题：<Text className='gen-quote-b'>{req.kb.kbName}</Text>
+              {focus ? `，重点：${focus}` : ''}
+            </>
+          ) : (
+            <>
+              你想学：<Text className='gen-quote-b'>{focus}</Text>
+            </>
+          )}
         </View>
 
         {phase === 'running' ? (
@@ -148,7 +184,7 @@ export default function Generating() {
             <View className='fail-foot'>
               <Btn onClick={() => setAttempt((a) => a + 1)}>重新出题</Btn>
               <Btn kind='ghost' className='mt14' onClick={() => goBackOrHome()}>
-                改一下内容
+                {req.kb ? '改一下设置' : '改一下内容'}
               </Btn>
             </View>
           </>

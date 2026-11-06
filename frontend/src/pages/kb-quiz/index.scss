@@ -1,0 +1,118 @@
+/* 用知识库出题（原型 02-input-and-library.html 第 10 屏） */
+.kb-quiz {
+  .sec-t.first {
+    margin-top: 4px;
+  }
+  .list .li .check {
+    margin-right: 12px;
+  }
+  .doc-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .kq-none {
+    background: var(--paper);
+    border: 2.5px dashed var(--ink);
+    padding: 14px;
+    font-size: 14px;
+  }
+  .field {
+    display: block;
+    margin-top: 14px;
+  }
+  .field-t {
+    display: block;
+    font: 400 17px/1.2 var(--display);
+    margin-bottom: 6px;
+  }
+  .kq-focus {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 10px 12px 6px;
+  }
+  .kq-focus.is-error {
+    border-color: var(--red);
+  }
+  .kq-focus-el {
+    display: block;
+    width: 100%;
+    height: 72px;
+    font-size: 15px;
+    line-height: 1.6;
+    font-family: var(--body);
+    color: var(--ink);
+    background: transparent;
+  }
+  /* H5 端 Taro 会把 Textarea 包一层，内层原生 textarea 不继承字体（同首页） */
+  .kq-focus-el textarea {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    outline: none;
+    resize: none;
+    padding: 0;
+  }
+  .kq-placeholder {
+    color: #8a929b;
+  }
+  .kq-count {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #8a929b;
+  }
+  .kq-len {
+    display: flex;
+  }
+  .kq-len-btn {
+    flex: 1;
+    height: 46px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-size: 12.5px;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .kq-len-btn + .kq-len-btn {
+    margin-left: 8px;
+  }
+  .kq-len-btn.is-on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .kq-len-n {
+    display: block;
+    font: 400 17px/1.1 var(--display);
+  }
+  .kq-err {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: var(--red);
+    line-height: 1.5;
+  }
+  .kq-err .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 1px 6px 0 0;
+  }
+  .kq-tip {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .kq-pad {
+    height: 16px;
+  }
+}
