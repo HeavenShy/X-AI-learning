@@ -5,7 +5,9 @@ import { useState, type ReactNode } from 'react'
 
 import { iconClass } from '../assets/icon-class'
 import type { IconName } from '../assets/icons'
+import { formatSource } from '../core/kb'
 import type { CellState } from '../core/session'
+import type { QuestionSource } from '../types/api'
 
 export function Icon({ name, className = '' }: { name: IconName; className?: string }) {
   // 图标图片在 icons.generated.scss 里，避免内联 style 携带 base64
@@ -71,9 +73,18 @@ interface CaptionBoxProps {
   explanation: string
   knowledgePoint: string
   toggleable?: boolean
+  /** 知识库出的题：在讲解下方显示出处与原文摘录；文本题为空，不显示 */
+  sources?: QuestionSource[]
 }
 
-export function CaptionBox({ defaultOpen, answerLine, explanation, knowledgePoint, toggleable = true }: CaptionBoxProps) {
+export function CaptionBox({
+  defaultOpen,
+  answerLine,
+  explanation,
+  knowledgePoint,
+  toggleable = true,
+  sources = []
+}: CaptionBoxProps) {
   const [open, setOpen] = useState(defaultOpen)
   const paragraphs = explanation.split(/\n+/).filter((p) => p.trim())
   return (
@@ -93,6 +104,12 @@ export function CaptionBox({ defaultOpen, answerLine, explanation, knowledgePoin
             <Text key={i} className='p'>
               {p.trim()}
             </Text>
+          ))}
+          {sources.map((s, i) => (
+            <View key={`${s.document_id}-${i}`} className='cite'>
+              <Text className='cite-h'>{formatSource(s)}</Text>
+              <Text className='cite-q'>{s.quote}</Text>
+            </View>
           ))}
           <Text className='kp'>知识点：{knowledgePoint}</Text>
         </View>

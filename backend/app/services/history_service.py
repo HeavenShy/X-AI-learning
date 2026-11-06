@@ -14,6 +14,7 @@ from app.models.report import AnswerRecord, Report, ScoreSummary
 from app.models.user import HistoryItem, HistoryPage, QuizDetail, Reward
 from app.repositories import quiz_repository as quizzes
 from app.repositories import user_repository as users
+from app.services.quiz_validator import DEFAULT_TOPIC
 from app.utils.timeutil import iso_utc, utcnow
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,10 @@ logger = logging.getLogger(__name__)
 XP_PER_CORRECT = 10
 COINS_PER_CORRECT = 5
 MSG_NOT_FOUND = "没找到这一话的记录"
+
+
+def source_type_of(questions: list[Question]) -> str:
+    return "knowledge_base" if any(q.sources for q in questions) else "text"
 
 
 def reward_for(correct_count: int) -> Reward:
@@ -41,6 +46,7 @@ class HistoryService:
                 summary=quiz.summary,
                 user_input=quiz.user_input,
                 difficulty=difficulty,
+                topic=quiz.topic,
                 questions=[q.model_dump() for q in quiz.questions],
                 now=now or utcnow(),
             )
@@ -111,13 +117,17 @@ class HistoryService:
             episode = await quizzes.episode_number(cur, user_id, record["created_at"]) if record else 0
         if not quiz or quiz["user_id"] != user_id or not record:
             raise BizError(ErrorCode.NOT_FOUND, MSG_NOT_FOUND)
+        questions = [Question.model_validate(q) for q in quiz["questions"]]
         return QuizDetail(
             quiz=Quiz(
                 quiz_id=quiz["quiz_id"],
                 title=quiz["title"],
                 summary=quiz["summary"],
                 user_input=quiz["user_input"],
-                questions=quiz["questions"],
+                questions=questions,
+                topic=quiz["topic"] or DEFAULT_TOPIC,
+                # quiz_sessions 没有来源列：任一题带出处即为知识库出题
+                source_type=source_type_of(questions),
             ),
             difficulty=quiz["difficulty"],
             answer_records=[AnswerRecord.model_validate(r) for r in record["results"]],

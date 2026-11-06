@@ -10,6 +10,16 @@ export interface Option {
   text: string
 }
 
+/** 知识库出题的出处快照（资料删除后仍随题目保留） */
+export interface QuestionSource {
+  document_id: string
+  document_name: string
+  /** PDF 有页码；Word / TXT / Markdown 为 null */
+  page: number | null
+  /** 不超过 120 字的原文摘录 */
+  quote: string
+}
+
 export interface Question {
   id: string
   type: QuestionType
@@ -19,13 +29,19 @@ export interface Question {
   explanation: string
   knowledge_point: string
   difficulty: Difficulty
+  /** 知识库出的题至少 1 项；文本出题为空数组。可选：本地存的旧闯关进度没有这个字段 */
+  sources?: QuestionSource[]
 }
+
+export type SourceType = 'text' | 'knowledge_base'
 
 export interface Quiz {
   quiz_id: string
   title: string
   summary: string
-  source_type: 'text'
+  /** 大类主题（知识树分组），AI 没给时为“其他”；旧后端可能没有 */
+  topic?: string
+  source_type: SourceType
   user_input: string
   questions: Question[]
 }
@@ -87,6 +103,14 @@ export const ErrorCode = {
   UNAUTHORIZED: 4010,
   LOGIN_FAILED: 4011,
   NICKNAME_NOT_ALLOWED: 4012,
+  /** 知识库：文件类型不支持 */
+  FILE_TYPE_NOT_SUPPORTED: 4020,
+  /** 知识库：文件为空或超过 20 MB */
+  FILE_SIZE_INVALID: 4021,
+  /** 知识库：超出数量上限（知识库 10 个 / 资料 50 份） */
+  LIMIT_EXCEEDED: 4022,
+  /** 知识库：所选资料都还没准备好 */
+  NO_READY_DOCUMENTS: 4023,
   NOT_FOUND: 4040,
   INTERNAL_ERROR: 5000,
   /** 前端自定义：网络不通 / 超时 */
@@ -118,6 +142,10 @@ export interface Profile extends UserBrief {
   /** 总正确率（整数百分比） */
   average_accuracy: number
   week_minutes: number
+  /** 未掌握的错题数（错题本入口的红色数字） */
+  mistake_count: number
+  /** 已完结的话涉及几个主题 */
+  topic_count: number
 }
 
 export interface ProfileUpdate {
@@ -190,4 +218,121 @@ export interface ReviewAnswerResult {
   correct_answers: string[]
   /** 提交后是否已掌握（已移出错题本） */
   mastered: boolean
+}
+
+// ---------- 知识库（backend/app/models/kb.py） ----------
+
+export type DocumentStatus = 'processing' | 'ready' | 'failed'
+export type KbFileType = 'pdf' | 'docx' | 'txt' | 'md'
+
+export interface KnowledgeBase {
+  kb_id: string
+  name: string
+  document_count: number
+  /** 可出题（ready）的资料数 */
+  ready_count: number
+  /** ISO 8601 UTC */
+  created_at: string
+  updated_at: string
+}
+
+export interface KbList {
+  items: KnowledgeBase[]
+  total: number
+  /** 所有知识库合计的资料数与上限 */
+  document_total: number
+  document_limit: number
+}
+
+export interface KbDocument {
+  document_id: string
+  filename: string
+  file_type: KbFileType
+  size_bytes: number
+  status: DocumentStatus
+  /** 仅失败时有 */
+  fail_reason: string | null
+  /** 仅 PDF 有 */
+  page_count: number | null
+  char_count: number
+  /** 上传时间，ISO 8601 UTC */
+  created_at: string
+}
+
+export interface KbDetail {
+  knowledge_base: KnowledgeBase
+  documents: KbDocument[]
+}
+
+export interface KbQuizRequest {
+  /** 为空：该库全部资料 */
+  document_ids: string[]
+  /** 想重点学什么（选填，≤200 字） */
+  focus: string
+  question_count: QuestionCount
+  difficulty: DifficultyOption
+}
+
+// ---------- 学习数据 / 知识树（backend/app/models/stats.py） ----------
+
+export type StatsRange = 'week' | 'month' | 'all'
+
+export interface StatsBar {
+  /** 本周“一 … 日 / 今天”，本月“第 N 周”，全部“N 月” */
+  label: string
+  minutes: number
+  /** 当前这一格（今天 / 本周 / 本月） */
+  is_current: boolean
+}
+
+export interface TypeAccuracy {
+  type: QuestionType
+  correct: number
+  total: number
+  accuracy: number
+}
+
+export interface LearningStats {
+  range: StatsRange
+  period_label: string
+  total_minutes: number
+  /** 上周 / 上月分钟数；全部时为 null */
+  prev_minutes: number | null
+  bars: StatsBar[]
+  quiz_count: number
+  question_count: number
+  type_accuracy: TypeAccuracy[]
+  multiple_missed: number
+  weak_points: string[]
+}
+
+export interface StatsInsight {
+  /** 没有数据或 AI 生成失败时为 null */
+  insight: string | null
+}
+
+export interface TreeQuiz {
+  quiz_id: string
+  title: string
+  user_input: string
+  correct: number
+  total: number
+  accuracy: number
+  /** 这一话答错的知识点 */
+  weak_points: string[]
+  finished_at: string
+}
+
+export interface TreeTopic {
+  topic: string
+  quiz_count: number
+  correct: number
+  total: number
+  accuracy: number
+  quizzes: TreeQuiz[]
+}
+
+export interface KnowledgeTree {
+  topic_count: number
+  topics: TreeTopic[]
 }

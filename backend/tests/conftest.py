@@ -177,19 +177,23 @@ class Api:
     def put(self, path: str, json: dict, token: str | None = None):
         return self.client.put(f"/api/v1{path}", json=json, headers=self.auth(token) if token else {})
 
+    def delete(self, path: str, token: str | None = None):
+        return self.client.delete(f"/api/v1{path}", headers=self.auth(token) if token else {})
 
-@pytest.fixture
-def api(sql):
-    from fastapi.testclient import TestClient
+    def upload(self, path: str, filename: str, content: bytes, token: str | None = None):
+        return self.client.post(
+            f"/api/v1{path}", files={"file": (filename, content)}, headers=self.auth(token) if token else {}
+        )
 
+
+def build_app(settings: Settings, *, before_start=None):
+    """带真实测试库的 App 与假模型；before_start(app, ctx) 可在启动前放入更多假实现。"""
     from app.api.deps import get_quiz_service, get_report_service, get_wechat_auth
-    from app.utils.content_filter import get_content_filter
     from app.main import create_app
     from app.services.quiz_service import QuizService
     from app.services.report_service import ReportService
-    from app.utils.content_filter import ContentFilter
+    from app.utils.content_filter import ContentFilter, get_content_filter
 
-    settings = db_settings()
     app = create_app(settings)
     wechat = FakeWeChat()
     report_gen = ScriptedReport()
@@ -200,6 +204,109 @@ def api(sql):
     app.dependency_overrides[get_content_filter] = lambda: words
     app.dependency_overrides[get_quiz_service] = lambda: quiz_service
     app.dependency_overrides[get_report_service] = lambda: report_service
+    app.state.content_filter = words
+    if before_start is not None:
+        before_start(app)
+    return app, wechat, report_gen
+
+
+@pytest.fixture
+def api(sql):
+    from fastapi.testclient import TestClient
+
+    app, wechat, report_gen = build_app(db_settings())
     with TestClient(app) as client:
         assert app.state.db is not None, "lifespan 未连上测试库"
         yield Api(client, wechat, report_gen)
+
+
+# ---------- 知识库接口测试：开启知识库，Embedding / 向量库用假实现 ----------
+
+
+class ScriptedKbQuiz:
+    """知识库出题假模型：outcomes 为空时按材料里的真实编号轮流标出处；元素是异常则抛出，是 dict 则作为输出。"""
+
+    def __init__(self):
+        self.outcomes: list = []
+        self.calls: list[dict] = []
+
+    async def generate(self, *, materials: str, question_count: int, **kw):
+        import re
+
+        from app.llm.output_schemas import GeneratedKbQuiz
+        from tests.factories import kb_quiz_dict
+
+        self.calls.append({"materials": materials, "question_count": question_count, **kw})
+        if self.outcomes:
+            o = self.outcomes.pop(0)
+            if isinstance(o, BaseException):
+                raise o
+            return GeneratedKbQuiz.model_validate(o)
+        numbers = [int(n) for n in re.findall(r"^\[(\d+)\]", materials, re.M)]
+        return GeneratedKbQuiz.model_validate(
+            kb_quiz_dict(question_count, source_ids=lambda i: [numbers[i % len(numbers)]])
+        )
+
+
+class KbApi(Api):
+    def __init__(self, client, wechat, report_gen, *, app, embedder, vectors, upload_dir, kb_quiz):
+        super().__init__(client, wechat, report_gen)
+        self.app = app
+        self.embedder = embedder
+        self.vectors = vectors
+        self.upload_dir = upload_dir
+        self.kb_quiz = kb_quiz
+
+    def create_kb(self, token: str, name: str = "公司新人考核") -> str:
+        body = self.post("/knowledge-bases", {"name": name}, token).json()
+        assert body["code"] == 0, body
+        return body["data"]["kb_id"]
+
+    def wait_documents(self, token: str, kb_id: str, timeout: float = 10.0) -> list[dict]:
+        """轮询详情直到没有处理中的资料（后台任务跑在 TestClient 的事件循环里）。"""
+        import time
+
+        deadline = time.monotonic() + timeout
+        while True:
+            docs = self.get(f"/knowledge-bases/{kb_id}", token).json()["data"]["documents"]
+            if all(d["status"] != "processing" for d in docs) or time.monotonic() > deadline:
+                return docs
+            time.sleep(0.05)
+
+
+def kb_settings(tmp_path, **overrides) -> Settings:
+    base = dict(
+        siliconflow_api_key="sk-sf-test",
+        kb_upload_dir=str(tmp_path / "uploads"),
+        chroma_path=str(tmp_path / "chroma"),
+    )
+    base.update(overrides)
+    return db_settings(**base)
+
+
+@pytest.fixture
+def kb_api(sql, tmp_path):
+    from fastapi.testclient import TestClient
+
+    from app.rag.vector_store import InMemoryVectorStore
+    from tests.kb_files import FakeEmbedder
+
+    from app.api.deps import get_kb_quiz_generator
+
+    embedder = FakeEmbedder()
+    vectors = InMemoryVectorStore()
+    kb_quiz = ScriptedKbQuiz()
+
+    def install(app):
+        app.state.embedder = embedder
+        app.state.vector_store = vectors
+        app.dependency_overrides[get_kb_quiz_generator] = lambda: kb_quiz
+
+    settings = kb_settings(tmp_path)
+    app, wechat, report_gen = build_app(settings, before_start=install)
+    with TestClient(app) as client:
+        assert app.state.kb_ingestor is not None, "知识库未开启"
+        yield KbApi(
+            client, wechat, report_gen, app=app, embedder=embedder, vectors=vectors,
+            upload_dir=tmp_path / "uploads", kb_quiz=kb_quiz,
+        )

@@ -39,6 +39,8 @@ interface ReportView {
   status: 'loading' | 'done' | 'error'
   data: Report | null
   again: { text: string; count: QuestionCount; difficulty: DifficultyOption }
+  /** 知识库出的题：“再来一话”回到知识库列表 */
+  fromKb: boolean
 }
 
 /** 本次闯关 */
@@ -73,7 +75,8 @@ function useCurrentView(enabled: boolean): ReportView | null {
       text: session.quiz.user_input,
       count: session.quiz.questions.length as QuestionCount,
       difficulty: session.difficulty
-    }
+    },
+    fromKb: session.quiz.source_type === 'knowledge_base'
   }
 }
 
@@ -124,7 +127,8 @@ function useHistoryView(quizId: string | undefined) {
       episode: d.episode,
       status: state.reportStatus,
       data: state.reportStatus === 'done' ? d.report : null,
-      again: { text: d.quiz.user_input, count: d.quiz.questions.length as QuestionCount, difficulty: d.difficulty }
+      again: { text: d.quiz.user_input, count: d.quiz.questions.length as QuestionCount, difficulty: d.difficulty },
+      fromKb: d.quiz.source_type === 'knowledge_base'
     }
   }
   return { state, view, loadDetail, retry: () => state.phase === 'ready' && retryReport(state.detail) }
@@ -173,6 +177,11 @@ export default function ReportPage() {
   const onRetry = () => (fromHistory ? history.retry() : ensureReport(true))
 
   const onAgain = () => {
+    // 知识库出的题没记下用的是哪个库：回到“我的知识库”重新选
+    if (view.fromKb) {
+      Taro.reLaunch({ url: '/pages/kb-list/index' })
+      return
+    }
     useStore.getState().requestGenerate(view.again)
     Taro.reLaunch({ url: '/pages/generating/index' })
   }

@@ -34,3 +34,12 @@ node_modules/
 
 # Claude Code 个人本地设置
 .claude
+
+# Coding Agent 本地设置
+.agents
+
+# openSpec文档
+openspec/
+
+#测试文件
+pytest-of-sxsns/

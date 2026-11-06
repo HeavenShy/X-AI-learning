@@ -1,6 +1,7 @@
 /**
  * 我的：原型 03 第 1 屏（pages/me）。
- * 顶部身份和等级，三个数字回答“我学了多少”；列表里本期只开放“历史记录”，其余入口置灰。
+ * 顶部身份和等级，三个数字回答“我学了多少”。列表里会员之外的入口都已开放：
+ * 知识树右侧写“N 个主题”，错题本用红色数字提醒还有几道没掌握（点进去切到复习标签）。
  * 点头像或昵称可以改昵称（微信“头像昵称填写能力”：type=nickname 的输入框）。
  */
 
@@ -20,6 +21,7 @@ import { updateProfile } from '../../services/api'
 import { ensureLogin } from '../../services/auth'
 import { ApiError } from '../../services/request'
 import { useStore } from '../../store'
+import type { Profile as ServerProfile } from '../../types/api'
 import './index.scss'
 
 const DEFAULT_NICKNAME = '学习者'
@@ -29,18 +31,31 @@ interface Entry {
   icon: IconName
   text: string
   url?: string
+  /** url 是标签页，用 switchTab 打开 */
+  tab?: boolean
   yellow?: boolean
+  /** 右侧灰字（如“6 个主题”） */
+  val?: string
+  /** 右侧红色数字，0 不显示 */
+  badge?: number
 }
 
 /** 原型列表的六个入口；没有 url 的本期未开放 */
-const ENTRIES: Entry[] = [
-  { icon: 'chartGrey', text: '学习数据' },
-  { icon: 'treeGrey', text: '知识树' },
-  { icon: 'clock', text: '历史记录', url: '/pages/history/index' },
-  { icon: 'crossBookGrey', text: '错题本' },
-  { icon: 'folderGrey', text: '我的知识库' },
-  { icon: 'crownGrey', text: '会员', yellow: true }
-]
+function entries(me: ServerProfile | null): Entry[] {
+  return [
+    { icon: 'chart', text: '学习数据', url: '/pages/stats/index' },
+    {
+      icon: 'tree',
+      text: '知识树',
+      url: '/pages/knowledge-tree/index',
+      val: me && me.topic_count > 0 ? `${me.topic_count} 个主题` : undefined
+    },
+    { icon: 'clock', text: '历史记录', url: '/pages/history/index' },
+    { icon: 'crossBook', text: '错题本', url: '/pages/review/index', tab: true, badge: me?.mistake_count },
+    { icon: 'folder', text: '我的知识库', url: '/pages/kb-list/index' },
+    { icon: 'crownGrey', text: '会员', yellow: true }
+  ]
+}
 
 function NicknameDialog({ initial, onClose }: { initial: string; onClose: () => void }) {
   const [value, setValue] = useState(initial)
@@ -148,8 +163,9 @@ export default function Me() {
       ]
 
   const onEntry = (e: Entry) => {
-    if (e.url) Taro.navigateTo({ url: e.url })
-    else Taro.showToast({ title: '即将上线', icon: 'none' })
+    if (!e.url) Taro.showToast({ title: '即将上线', icon: 'none' })
+    else if (e.tab) Taro.switchTab({ url: e.url })
+    else Taro.navigateTo({ url: e.url })
   }
 
   return (
@@ -189,7 +205,7 @@ export default function Me() {
         </View>
 
         <View className='list me-list'>
-          {ENTRIES.map((e) => (
+          {entries(me).map((e) => (
             <View
               key={e.text}
               className={`li ${e.url ? '' : 'is-off'}`}
@@ -200,6 +216,8 @@ export default function Me() {
                 <Icon name={e.icon} />
               </View>
               <Text className='grow'>{e.text}</Text>
+              {e.val && <Text className='val'>{e.val}</Text>}
+              {!!e.badge && e.badge > 0 && <Text className='badge-n'>{e.badge > 99 ? '99+' : e.badge}</Text>}
               <View className='chev' />
             </View>
           ))}

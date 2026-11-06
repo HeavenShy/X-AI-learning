@@ -20,6 +20,8 @@ export const ICON_SVGS = {
     '<path d="M13.5 2 L5 13.5 h6 L9.5 22 L19 10 h-6 Z" fill="#FFD21F" stroke="#000" stroke-width="2" stroke-linejoin="round"/>'
   ),
   doc: svg('0 0 16 16', `<path d="M4 1.5h5l3 3V14.5H4z M9 1.5v3h3" fill="none" stroke="${GREY}" stroke-width="1.6"/>`),
+  // 可用的“传文档”入口与知识库资料列表用黑色
+  docInk: svg('0 0 16 16', `<path d="M4 1.5h5l3 3V14.5H4z M9 1.5v3h3" fill="none" stroke="#000" stroke-width="1.6"/>`),
   link: svg(
     '0 0 16 16',
     `<path d="M6.5 9.5l3-3 M7 4.5l1.5-1.5a2.5 2.5 0 013.5 3.5L10.5 8 M9 11.5L7.5 13a2.5 2.5 0 01-3.5-3.5L5.5 8" fill="none" stroke="${GREY}" stroke-width="1.6"/>`

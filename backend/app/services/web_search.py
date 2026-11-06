@@ -102,11 +102,13 @@ def build_reference(
     item_max_chars: int,
     total_max_chars: int,
     content_filter: ContentFilter,
+    numbered: bool = True,
 ) -> str:
     """把检索结果整理为参考资料文本：`[n] 标题\\n摘要`，条目间空一行；没有可用条目时返回空串。
 
     单条摘要截断到 item_max_chars；累计长度到 total_max_chars 为止（超出的条目截断或丢弃）。
     命中敏感词的条目整条丢弃。
+    numbered=False 时条目以 `- 标题` 开头、不编号（知识库出题的背景资料：不能和资料片段编号混淆）。
     """
     parts: list[str] = []
     total = 0
@@ -118,7 +120,8 @@ def build_reference(
         if content_filter.find(title) or content_filter.find(content):
             continue
         content = content[:item_max_chars]
-        entry = f"[{len(parts) + 1}] {title}\n{content}" if title else f"[{len(parts) + 1}]\n{content}"
+        mark = f"[{len(parts) + 1}]" if numbered else "-"
+        entry = f"{mark} {title}\n{content}" if title else f"{mark}\n{content}"
         sep = 2 if parts else 0  # 条目之间的 "\n\n"
         room = total_max_chars - total - sep
         if room <= 0:

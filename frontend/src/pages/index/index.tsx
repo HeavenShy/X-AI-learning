@@ -84,9 +84,13 @@ export default function Index() {
           />
           <View className='in-foot'>
             <View className='in-tools'>
-              {/* 传文档、贴网址、贴视频为 P1 功能，先置灰 */}
-              <View className='in-tool'>
-                <Icon name='doc' />
+              {/* 传文档：打开“我的知识库”上传资料后按资料出题；贴网址、贴视频为 P1 功能，先置灰 */}
+              <View
+                className='in-tool is-on'
+                hoverClass='in-tool-pressed'
+                onClick={() => Taro.navigateTo({ url: '/pages/kb-list/index' })}
+              >
+                <Icon name='docInk' />
                 <Text>传文档</Text>
               </View>
               <View className='in-tool'>

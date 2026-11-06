@@ -1,0 +1,72 @@
+/* 知识库详情（原型 02-input-and-library.html 第 9 屏 .lib-head） */
+.kb-detail {
+  .lib-head {
+    background: var(--halftone), var(--yellow);
+    border: 2.5px solid var(--ink);
+    padding: 14px;
+  }
+  .lib-name {
+    display: block;
+    font: 400 30px/1.15 var(--display);
+    word-break: break-all;
+  }
+  .lib-sub {
+    display: block;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .lib-actions {
+    display: flex;
+    margin-top: 12px;
+  }
+  .lib-actions .btn {
+    width: auto;
+    font-size: 18px;
+    min-height: 44px;
+  }
+  .lib-up {
+    flex: 1;
+    margin-right: 10px;
+  }
+  .lib-go {
+    flex: 1.5;
+    background: var(--paper);
+  }
+  .doc-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .small.is-fail {
+    color: #b3201c;
+  }
+  .list .li .pill {
+    flex: none;
+  }
+  .lib-empty {
+    background: var(--paper);
+    border: 2.5px dashed var(--ink);
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .lib-empty-t {
+    display: block;
+    font: 400 18px/1.3 var(--display);
+  }
+  .lib-empty-p {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .kb-tip {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .kb-pad {
+    height: 16px;
+  }
+}

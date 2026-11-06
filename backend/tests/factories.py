@@ -1,6 +1,6 @@
 """测试用的数据构造器。"""
 
-from app.llm.output_schemas import GeneratedQuiz
+from app.llm.output_schemas import GeneratedKbQuiz, GeneratedQuiz
 from app.prompts.quiz_prompt import type_plan
 
 
@@ -68,3 +68,20 @@ def quiz_dict(count: int = 5) -> dict:
 
 def generated_quiz(count: int = 5) -> GeneratedQuiz:
     return GeneratedQuiz.model_validate(quiz_dict(count))
+
+
+def kb_quiz_dict(count: int = 5, *, source_ids=None, quote: str = "") -> dict:
+    """知识库出题的模型输出：在文本题基础上每题带 source_ids / source_quote。
+
+    source_ids 为 None 时每题都标片段 1；也可以传一个函数 (题序号从 0 起) -> list[int]。
+    """
+    data = quiz_dict(count)
+    for i, q in enumerate(data["questions"]):
+        ids = [1] if source_ids is None else (source_ids(i) if callable(source_ids) else list(source_ids))
+        q["source_ids"] = ids
+        q["source_quote"] = quote
+    return data
+
+
+def generated_kb_quiz(count: int = 5, **kw) -> GeneratedKbQuiz:
+    return GeneratedKbQuiz.model_validate(kb_quiz_dict(count, **kw))

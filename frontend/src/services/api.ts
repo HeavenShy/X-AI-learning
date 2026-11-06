@@ -1,5 +1,12 @@
 import type {
   HistoryPage,
+  KbDetail,
+  KbDocument,
+  KbList,
+  KbQuizRequest,
+  KnowledgeBase,
+  KnowledgeTree,
+  LearningStats,
   MistakeList,
   Profile,
   ProfileUpdate,
@@ -9,9 +16,11 @@ import type {
   Report,
   ReportGenerateRequest,
   ReviewAnswerRequest,
-  ReviewAnswerResult
+  ReviewAnswerResult,
+  StatsInsight,
+  StatsRange
 } from '../types/api'
-import { authed } from './auth'
+import { authed, authedUpload } from './auth'
 
 /** 后端最多重试 3 次，每次 LLM 超时 60s；实际一般 5–12 秒。登录后题库会保存到“历史记录” */
 export const generateQuiz = (req: QuizGenerateRequest) => authed<Quiz>('POST', '/api/v1/quiz/generate', req, 120_000)
@@ -36,3 +45,41 @@ export const listMistakes = () => authed<MistakeList>('GET', '/api/v1/review/mis
 /** 重做一道错题：服务端按存档答案判题，答对即移出错题本；不发经验金币 */
 export const submitReviewAnswer = (req: ReviewAnswerRequest) =>
   authed<ReviewAnswerResult>('POST', '/api/v1/review/answer', req, 15_000)
+
+/** 学习数据：时长分桶、题型正确率（纯统计，秒回） */
+export const getLearningStats = (range: StatsRange) =>
+  authed<LearningStats>('GET', `/api/v1/user/stats?range=${range}`, undefined, 15_000)
+
+/** 图表下的一句 AI 结论：数据没变走缓存；没数据或生成失败时 insight 为 null */
+export const getStatsInsight = (range: StatsRange) =>
+  authed<StatsInsight>('GET', `/api/v1/user/stats/insight?range=${range}`, undefined, 45_000)
+
+/** 知识树：已完结的话按主题分组 */
+export const getKnowledgeTree = () => authed<KnowledgeTree>('GET', '/api/v1/user/knowledge-tree', undefined, 15_000)
+
+// ---------- 知识库（都要求登录；后端没配 Embedding Key 时返回 5000） ----------
+
+const kbPath = (kbId: string) => `/api/v1/knowledge-bases/${encodeURIComponent(kbId)}`
+
+export const listKnowledgeBases = () => authed<KbList>('GET', '/api/v1/knowledge-bases', undefined, 15_000)
+
+export const createKnowledgeBase = (name: string) =>
+  authed<KnowledgeBase>('POST', '/api/v1/knowledge-bases', { name }, 15_000)
+
+export const getKnowledgeBase = (kbId: string) => authed<KbDetail>('GET', kbPath(kbId), undefined, 15_000)
+
+export const renameKnowledgeBase = (kbId: string, name: string) =>
+  authed<KnowledgeBase>('PUT', kbPath(kbId), { name }, 15_000)
+
+export const deleteKnowledgeBase = (kbId: string) => authed<null>('DELETE', kbPath(kbId), undefined, 15_000, true)
+
+/** 上传立即返回 processing 的资料，解析与向量化在后台进行（详情页轮询状态）。20 MB 走慢网也要些时间 */
+export const uploadDocument = (kbId: string, filePath: string) =>
+  authedUpload<KbDocument>(`${kbPath(kbId)}/documents`, filePath, 120_000)
+
+export const deleteDocument = (kbId: string, documentId: string) =>
+  authed<null>('DELETE', `${kbPath(kbId)}/documents/${encodeURIComponent(documentId)}`, undefined, 15_000, true)
+
+/** 只依据资料出题、不联网；同文本出题一样存为一话。检索 + 最多 3 次重试 */
+export const generateKbQuiz = (kbId: string, req: KbQuizRequest) =>
+  authed<Quiz>('POST', `${kbPath(kbId)}/quiz`, req, 120_000)

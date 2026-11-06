@@ -8,7 +8,9 @@ from app.core.config import Settings
 from app.core.db import Database
 from app.core.exceptions import BizError, ErrorCode
 from app.models.user import LoginResponse, Profile, ProfileUpdate, UserBrief
+from app.repositories import stats_repository as stats_repo
 from app.repositories import user_repository as users
+from app.services.review_service import count_mistakes
 from app.services.scoring_service import percent
 from app.services.wechat_auth import WeChatAuthClient, WeChatLoginError
 from app.utils.content_filter import ContentFilter
@@ -59,6 +61,8 @@ class UserService:
                 # token 有效但用户已不存在（如库被重置），让前端重新登录
                 raise BizError(ErrorCode.UNAUTHORIZED, MSG_UNAUTHORIZED, http_status=401)
             st = await users.stats(cur, user_id, week_start_utc(now or utcnow()))
+            mistake_count = await count_mistakes(cur, user_id)
+            topic_count = await stats_repo.count_topics(cur, user_id)
         return Profile(
             **_brief(row).model_dump(),
             quiz_count=st["quiz_count"],
@@ -66,6 +70,8 @@ class UserService:
             question_count=st["question_count"],
             average_accuracy=percent(st["correct_count"], st["question_count"]),
             week_minutes=(st["week_ms"] + 30_000) // 60_000,
+            mistake_count=mistake_count,
+            topic_count=topic_count,
         )
 
     def _check_nickname(self, raw: str) -> str:

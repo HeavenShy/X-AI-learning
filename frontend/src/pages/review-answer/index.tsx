@@ -160,6 +160,7 @@ export default function ReviewAnswer() {
                 answerLine={result.isCorrect ? undefined : answerLine(q)}
                 explanation={q.explanation}
                 knowledgePoint={q.knowledge_point}
+                sources={q.sources}
               />
             </View>
           )}

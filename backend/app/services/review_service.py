@@ -58,6 +58,13 @@ def merge_mistakes(sources: list[dict], items: list[dict]) -> list[MistakeItem]:
     return mistakes
 
 
+async def count_mistakes(cur, user_id: int) -> int:
+    """未掌握的错题数，口径与错题列表一致（“我的”页错题本入口的红色数字）。"""
+    sources = await reviews.list_wrong_sources(cur, user_id)
+    items = await reviews.get_review_items(cur, user_id)
+    return len(merge_mistakes(sources, items))
+
+
 class ReviewService:
     def __init__(self, db: Database):
         self._db = db

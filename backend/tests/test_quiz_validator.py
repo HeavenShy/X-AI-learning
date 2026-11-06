@@ -128,3 +128,25 @@ def test_rejects_empty_title():
     d = quiz_dict(3)
     d["title"] = " "
     _expect_invalid(d)
+
+
+# ---------- 主题 ----------
+
+
+def test_topic_is_normalized_and_never_fails():
+    from app.llm.output_schemas import GeneratedQuiz
+    from tests.factories import quiz_dict
+
+    assert normalize_quiz(GeneratedQuiz.model_validate({**quiz_dict(5), "topic": " 理财 "}), 5).topic == "理财"
+    assert normalize_quiz(GeneratedQuiz.model_validate({**quiz_dict(5), "topic": ""}), 5).topic == "其他"
+    assert normalize_quiz(GeneratedQuiz.model_validate(quiz_dict(5)), 5).topic == "其他"
+
+
+def test_strip_sources_keeps_topic():
+    from app.llm.output_schemas import GeneratedKbQuiz
+    from app.services.kb_materials import strip_sources
+    from tests.factories import kb_quiz_dict
+
+    g = GeneratedKbQuiz.model_validate({**kb_quiz_dict(5), "topic": "职场"})
+    plain = strip_sources(g.title, g.summary, g.questions, topic=g.topic)
+    assert normalize_quiz(plain, 5).topic == "职场"

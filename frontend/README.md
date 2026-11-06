@@ -1,6 +1,6 @@
 # 前端（Taro 4 + React + TypeScript）
 
-微信小程序“一话一懂”，UI 按 `prototype/01-core-flow.html` 与 `00-style-board.html` 还原；“我的”、历史记录按 `03-review-and-stats.html` 第 1、4、6 屏。
+微信小程序“一话一懂”，UI 按 `prototype/01-core-flow.html` 与 `00-style-board.html` 还原；“我的”、历史记录按 `03-review-and-stats.html` 第 1、4、6 屏；知识库按 `02-input-and-library.html` 第 7、9、10、12 屏。
 
 ## 本地运行（微信开发者工具）
 
@@ -40,7 +40,7 @@ TARO_APP_API_BASE="http://192.168.1.10:8000"   # 换成电脑 Wi-Fi 的局域网
 | --- | --- |
 | `npm run dev:weapp` / `build:weapp` | 小程序开发（监听）/ 生产构建。`build:weapp` 走 production 模式、读 `.env.production`；本地一次性构建用 `npx taro build --type weapp --mode development` |
 | `npm run dev:h5` | H5 调试（http://localhost:10086），方便在浏览器里看效果 |
-| `npm test` | 纯逻辑单测（`node:test` + tsx）：判题、等级经验、会话、格式化、折行、图形 |
+| `npm test` | 纯逻辑单测（`node:test` + tsx）：判题、等级经验、会话、格式化、折行、图形、知识库（预检 / 状态 / 出处文案） |
 | `npm run typecheck` | TypeScript 类型检查 |
 | `npm run gen:icons` | 修改 `src/assets/icons.ts` 后重新生成 `src/styles/icons.generated.scss` 与 `tab-icons.generated.scss`（单测会校验是否最新） |
 
@@ -50,9 +50,10 @@ TARO_APP_API_BASE="http://192.168.1.10:8000"   # 换成电脑 Wi-Fi 的局域网
 src/
   pages/        index 首页（标签“闯关”）· generating 出题中/失败 · overview 本话目录 · quiz 闯关
                 clear 通关结算 · report 复盘报告（?quiz_id= 时为历史回看）· poster 分享海报
-                me 我的（标签）· review 复习（标签，本期占位）· history 历史记录
+                me 我的（标签）· review 复习（标签，错题本）· review-answer 重做错题 · history 历史记录
+                kb-list 我的知识库 · kb-detail 知识库详情（上传 / 状态 / 删除）· kb-quiz 用知识库出题
   custom-tab-bar/  自定义底部标签栏（闯关 / 复习 / 我的）
-  components/   NavBar（按胶囊按钮计算的自定义导航栏）、ui（按钮、选项、讲解框、拟声词、弹窗…）、TabPage、Empty
+  components/   NavBar（按胶囊按钮计算的自定义导航栏）、ui（按钮、选项、讲解框、拟声词、弹窗…）、TabPage、Empty、KbNameDialog
   core/         纯逻辑，不依赖 Taro，可单测
   services/     请求封装（可中止）、登录态（auth）、账号同步（account）、报告生成（report-flow）、API、字体、海报
   store/        Zustand；个人资料 / 后端档案缓存 / 草稿 / 闯关会话持久化到本地，支持中断续答
@@ -75,6 +76,15 @@ tests/          node:test 单测
 - **改昵称**：点“我的”页头像或昵称，弹窗里用 `type="nickname"` 输入框（微信头像昵称填写能力，键盘上方可选微信昵称），按微信文档用 form 提交读取最终值。头像按原型显示昵称首字，本期不做头像上传。
 - **标签栏**：原生 tabBar 画不出原型样式，用自定义 tabBar。它是独立组件：`app.wxss` 对它不生效，图标单独生成 `styles/tab-icons.generated.scss`；它固定在页面之上，标签页底部用 `TabBarSpace` 留位，页面弹窗时用 `setTabBarHidden` 收起（`wx.hideTabBar` 管不到自定义 tabBar）。
 - **历史记录**：已完结的话来自后端（分页）；“没答完”只有本机那一条可续答的会话。点已完结的一话进入报告页历史模式，AI 复盘当时失败的可以在那里重试补上。
+
+## 知识库
+
+- **入口**：“我的”页“我的知识库”、首页输入框下的“传文档”都打开 `pages/kb-list`（“贴网址”“贴视频”仍置灰）。后端没配 Embedding Key 时接口返回 5000，页面显示“知识库暂时不可用”，文本出题不受影响。
+- **列表**（`kb-list`）：顶部“已存资料 x / 50 份”，列表为各知识库（资料数、更新时间）。底部新建（弹窗填名称，建好直接进详情）；长按知识库弹出“改名 / 删除”，删除前确认。
+- **详情**（`kb-detail`）：资料与状态（处理中 / 可出题 / 失败 + 原因）。“上传”用 `wx.chooseMessageFile` 从微信聊天里选文件（小程序只能这样拿到文件），先按后端同规则预检扩展名与 20 MB（`core/kb.ts`），再用 `Taro.uploadFile` 上传（multipart，字段 `file`；返回的 data 是字符串需自己解析，见 `services/request.ts`，带 token / 4010 重登见 `services/auth.ts` 的 `authedUpload`）。有资料处理中时每 3 秒刷新一次，处理完或页面隐藏 / 卸载即停。长按资料删除（先确认）。H5 没有 `chooseMessageFile`，只提示去微信里上传。
+- **出题设置**（`kb-quiz`）：默认勾选全部可出题资料，未就绪的不能勾并显示状态；选填“想重点学什么”（≤200 字）、题量 3 / 5 / 10。全选时向后端传空 `document_ids`（= 整个库）。开始后进入 `pages/generating`：`GenRequest.kb` 有值时调 `POST /knowledge-bases/{kb_id}/quiz`，步骤文案为“读取资料 / 找到相关片段 / 出题并写讲解”；资料未就绪（4023）、重点不合规（4003）回到设置页提示。成功后与文本出题一样进本话目录、闯关、结算、报告。
+- **出处**：知识库出的题每题带 `sources`，闯关页与重做错题页的讲解框（`CaptionBox`）在讲解下方显示“出处：文件名，第 N 页”和原文摘录；文本题 `sources` 为空，显示与之前一致。`Question.sources` 在类型里是可选的：本地存的旧闯关进度没有这个字段。
+- 知识库出的一话在报告页点“再来一话”回到知识库列表重新选（题目里没有记录用的是哪个库）。
 
 ### 开发者工具缓存
 

@@ -21,17 +21,18 @@ async def insert_quiz(
     difficulty: str,
     questions: list[dict],
     now: datetime,
+    topic: str = "",
 ) -> None:
     await cur.execute(
-        "INSERT INTO quiz_sessions (quiz_id, user_id, title, summary, user_input, difficulty, question_count, "
-        "questions_json, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-        (quiz_id, user_id, title, summary, user_input, difficulty, len(questions), _dumps(questions), now),
+        "INSERT INTO quiz_sessions (quiz_id, user_id, title, summary, user_input, difficulty, topic, question_count, "
+        "questions_json, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        (quiz_id, user_id, title, summary, user_input, difficulty, topic, len(questions), _dumps(questions), now),
     )
 
 
 async def get_quiz(cur: DictCursor, quiz_id: str) -> dict | None:
     await cur.execute(
-        "SELECT quiz_id, user_id, title, summary, user_input, difficulty, questions_json, created_at "
+        "SELECT quiz_id, user_id, title, summary, user_input, difficulty, topic, questions_json, created_at "
         "FROM quiz_sessions WHERE quiz_id = %s",
         (quiz_id,),
     )

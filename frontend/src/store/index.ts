@@ -34,10 +34,19 @@ export interface Draft {
   count: QuestionCount
 }
 
+/** 用知识库出题时的资料范围；documentIds 为空表示整个库 */
+export interface KbGenRequest {
+  kbId: string
+  kbName: string
+  documentIds: string[]
+}
+
 export interface GenRequest {
+  /** 文本出题：学习内容；知识库出题：想重点学什么（可为空） */
   text: string
   count: QuestionCount
   difficulty: DifficultyOption
+  kb?: KbGenRequest
 }
 
 export interface ReportState {
@@ -58,6 +67,8 @@ interface State {
   pendingQuiz: Quiz | null
   /** 出题页带回首页、显示在输入框下方的错误（如内容不合规） */
   homeError: string | null
+  /** 知识库出题失败（资料未就绪 4023 / 重点不合规 4003）带回出题设置页的提示 */
+  kbError: string | null
   report: ReportState | null
   /** 复习页点开、正在重做的错题（不持久化：被系统回收后重做页回到复习页） */
   reviewing: MistakeItem | null
@@ -66,6 +77,7 @@ interface State {
 
   setDraft: (d: Partial<Draft>) => void
   setHomeError: (msg: string | null) => void
+  setKbError: (msg: string | null) => void
   requestGenerate: (req: GenRequest) => void
   setPendingQuiz: (q: Quiz | null) => void
   startSession: () => void
@@ -109,13 +121,15 @@ export const useStore = create<State>((set, get) => ({
   genRequest: null,
   pendingQuiz: null,
   homeError: null,
+  kbError: null,
   report: null,
   reviewing: null,
   reviewMastered: null,
 
   setDraft: (d) => set({ draft: { ...get().draft, ...d } }),
   setHomeError: (homeError) => set({ homeError }),
-  requestGenerate: (genRequest) => set({ genRequest, pendingQuiz: null, homeError: null }),
+  setKbError: (kbError) => set({ kbError }),
+  requestGenerate: (genRequest) => set({ genRequest, pendingQuiz: null, homeError: null, kbError: null }),
   setPendingQuiz: (pendingQuiz) => set({ pendingQuiz }),
 
   startSession: () => {

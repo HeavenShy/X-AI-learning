@@ -1,0 +1,148 @@
+/* 知识树（原型 03-review-and-stats.html 第 3 屏 .legend / .tree / .node / .pc）。
+   连线用真实的 View 画：.kt-v 竖线、.kt-h 横线，不依赖伪元素 */
+.ktree {
+  .kt-loading {
+    display: block;
+    margin-top: 40px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 2px 0 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .lg {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+  }
+  .lg-i {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    border: 1.5px solid var(--ink);
+  }
+  .lg-i.g {
+    background: var(--green);
+  }
+  .lg-i.y {
+    background: var(--yellow);
+  }
+  .lg-i.r {
+    background: var(--red);
+  }
+
+  .kt-topic + .kt-topic {
+    margin-top: 12px;
+  }
+  .node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  .node.is-kid {
+    padding: 6px 10px;
+  }
+  .node-pressed {
+    background: var(--yellow-soft);
+  }
+  .node-t {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+  }
+  .node-b {
+    font: 400 19px/1.1 var(--display);
+  }
+  .node-s {
+    flex: none;
+    margin-left: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .node-n {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .pc {
+    flex: none;
+    margin-left: 8px;
+    padding: 3px 6px;
+    border: 2px solid var(--ink);
+    font: 400 17px/1 var(--display);
+  }
+  .pc.g {
+    background: var(--green);
+    color: #fff;
+  }
+  .pc.y {
+    background: var(--yellow);
+  }
+  .pc.r {
+    background: var(--red);
+    color: #fff;
+  }
+  .retry {
+    flex: none;
+    margin-left: 8px;
+    padding: 4px 6px;
+    border: 2px solid var(--ink);
+    background: var(--yellow);
+    font: 400 14px/1 var(--display);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .kt-kids {
+    margin-left: 16px;
+    padding-top: 6px;
+  }
+  .kt-kid {
+    position: relative;
+    padding-left: 16px;
+  }
+  .kt-kid + .kt-kid {
+    margin-top: 6px;
+  }
+  /* 竖线向上多画 6px，接上主题节点或上一个子节点 */
+  .kt-v {
+    position: absolute;
+    left: 0;
+    top: -6px;
+    bottom: 0;
+    border-left: 2.5px solid var(--ink);
+  }
+  /* 最后一个子节点：竖线只画到节点中间 */
+  .kt-v.is-last {
+    bottom: 50%;
+  }
+  .kt-h {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 16px;
+    border-top: 2.5px solid var(--ink);
+  }
+  .kt-tip {
+    display: block;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .kt-pad {
+    height: 16px;
+  }
+}

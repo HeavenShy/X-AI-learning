@@ -30,6 +30,10 @@ class Profile(UserBrief):
     average_accuracy: int
     # 本周学习分钟（北京时间周一 0 点起）
     week_minutes: int
+    # 未掌握的错题数（与错题列表 total 一致）
+    mistake_count: int = 0
+    # 已完结的话涉及几个主题（没有主题的旧数据算一个“其他”）
+    topic_count: int = 0
 
 
 class ProfileUpdate(BaseModel):

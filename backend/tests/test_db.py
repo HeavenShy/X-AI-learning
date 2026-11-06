@@ -10,6 +10,19 @@ async def test_schema_creates_all_tables(sql):
     assert "review_items" in {r["t"] for r in rows}
 
 
+async def test_schema_creates_knowledge_base_tables(sql):
+    rows = sql.all("SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE()")
+    assert {"knowledge_bases", "kb_documents", "kb_chunks"} <= {r["t"] for r in rows}
+    # 重复执行幂等，且不清掉已有数据
+    sql.execute("INSERT INTO knowledge_bases (kb_id, user_id, name) VALUES ('kb_x', 1, '甲')")
+    db = await Database.connect(db_settings())
+    try:
+        await init_schema(db)
+    finally:
+        await db.close()
+    assert sql.one("SELECT name FROM knowledge_bases WHERE kb_id = 'kb_x'")["name"] == "甲"
+
+
 async def test_init_schema_is_idempotent(sql):
     db = await Database.connect(db_settings())
     try:
@@ -62,3 +75,24 @@ def test_user_tables_have_expected_unique_keys(sql):
     assert uniques("reports") == {"user_id,quiz_id"}
     # 错题身份：question_id 只在一话内唯一
     assert uniques("review_items") == {"user_id,quiz_id,question_id"}
+    # 学习结论缓存：每人每档一条
+    assert uniques("stats_insights") == {"user_id,range_key"}
+    assert uniques("knowledge_bases") == {"kb_id"}
+    assert uniques("kb_documents") == {"document_id"}
+    assert uniques("kb_chunks") == set()
+
+
+async def test_init_schema_adds_topic_column_to_old_quiz_sessions(sql):
+    # 模拟上线前的旧库：没有 topic 列，且已有数据
+    sql.execute("ALTER TABLE quiz_sessions DROP COLUMN topic")
+    sql.execute(
+        "INSERT INTO quiz_sessions (quiz_id, user_id, title, summary, user_input, question_count, questions_json) "
+        "VALUES ('quiz_old', 1, '旧的一话', '', '', 0, '[]')"
+    )
+    db = await Database.connect(db_settings())
+    try:
+        await init_schema(db)
+        await init_schema(db)
+    finally:
+        await db.close()
+    assert sql.one("SELECT title, topic FROM quiz_sessions WHERE quiz_id = 'quiz_old'") == {"title": "旧的一话", "topic": ""}

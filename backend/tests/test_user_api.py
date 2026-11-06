@@ -84,6 +84,8 @@ def test_new_user_profile_is_empty(api):
         "question_count": 0,
         "average_accuracy": 0,
         "week_minutes": 0,
+        "mistake_count": 0,
+        "topic_count": 0,
     }
 
 
