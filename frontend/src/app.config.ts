@@ -11,6 +11,8 @@ export default defineAppConfig({
     'pages/review/index',
     'pages/review-answer/index',
     'pages/history/index',
+    'pages/stats/index',
+    'pages/knowledge-tree/index',
     'pages/kb-list/index',
     'pages/kb-detail/index',
     'pages/kb-quiz/index'

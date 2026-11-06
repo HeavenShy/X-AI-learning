@@ -5,6 +5,8 @@ import type {
   KbList,
   KbQuizRequest,
   KnowledgeBase,
+  KnowledgeTree,
+  LearningStats,
   MistakeList,
   Profile,
   ProfileUpdate,
@@ -14,7 +16,9 @@ import type {
   Report,
   ReportGenerateRequest,
   ReviewAnswerRequest,
-  ReviewAnswerResult
+  ReviewAnswerResult,
+  StatsInsight,
+  StatsRange
 } from '../types/api'
 import { authed, authedUpload } from './auth'
 
@@ -41,6 +45,17 @@ export const listMistakes = () => authed<MistakeList>('GET', '/api/v1/review/mis
 /** 重做一道错题：服务端按存档答案判题，答对即移出错题本；不发经验金币 */
 export const submitReviewAnswer = (req: ReviewAnswerRequest) =>
   authed<ReviewAnswerResult>('POST', '/api/v1/review/answer', req, 15_000)
+
+/** 学习数据：时长分桶、题型正确率（纯统计，秒回） */
+export const getLearningStats = (range: StatsRange) =>
+  authed<LearningStats>('GET', `/api/v1/user/stats?range=${range}`, undefined, 15_000)
+
+/** 图表下的一句 AI 结论：数据没变走缓存；没数据或生成失败时 insight 为 null */
+export const getStatsInsight = (range: StatsRange) =>
+  authed<StatsInsight>('GET', `/api/v1/user/stats/insight?range=${range}`, undefined, 45_000)
+
+/** 知识树：已完结的话按主题分组 */
+export const getKnowledgeTree = () => authed<KnowledgeTree>('GET', '/api/v1/user/knowledge-tree', undefined, 15_000)
 
 // ---------- 知识库（都要求登录；后端没配 Embedding Key 时返回 5000） ----------
 

@@ -39,6 +39,8 @@ export interface Quiz {
   quiz_id: string
   title: string
   summary: string
+  /** 大类主题（知识树分组），AI 没给时为“其他”；旧后端可能没有 */
+  topic?: string
   source_type: SourceType
   user_input: string
   questions: Question[]
@@ -140,6 +142,10 @@ export interface Profile extends UserBrief {
   /** 总正确率（整数百分比） */
   average_accuracy: number
   week_minutes: number
+  /** 未掌握的错题数（错题本入口的红色数字） */
+  mistake_count: number
+  /** 已完结的话涉及几个主题 */
+  topic_count: number
 }
 
 export interface ProfileUpdate {
@@ -267,3 +273,66 @@ export interface KbQuizRequest {
   difficulty: DifficultyOption
 }
 
+// ---------- 学习数据 / 知识树（backend/app/models/stats.py） ----------
+
+export type StatsRange = 'week' | 'month' | 'all'
+
+export interface StatsBar {
+  /** 本周“一 … 日 / 今天”，本月“第 N 周”，全部“N 月” */
+  label: string
+  minutes: number
+  /** 当前这一格（今天 / 本周 / 本月） */
+  is_current: boolean
+}
+
+export interface TypeAccuracy {
+  type: QuestionType
+  correct: number
+  total: number
+  accuracy: number
+}
+
+export interface LearningStats {
+  range: StatsRange
+  period_label: string
+  total_minutes: number
+  /** 上周 / 上月分钟数；全部时为 null */
+  prev_minutes: number | null
+  bars: StatsBar[]
+  quiz_count: number
+  question_count: number
+  type_accuracy: TypeAccuracy[]
+  multiple_missed: number
+  weak_points: string[]
+}
+
+export interface StatsInsight {
+  /** 没有数据或 AI 生成失败时为 null */
+  insight: string | null
+}
+
+export interface TreeQuiz {
+  quiz_id: string
+  title: string
+  user_input: string
+  correct: number
+  total: number
+  accuracy: number
+  /** 这一话答错的知识点 */
+  weak_points: string[]
+  finished_at: string
+}
+
+export interface TreeTopic {
+  topic: string
+  quiz_count: number
+  correct: number
+  total: number
+  accuracy: number
+  quizzes: TreeQuiz[]
+}
+
+export interface KnowledgeTree {
+  topic_count: number
+  topics: TreeTopic[]
+}
