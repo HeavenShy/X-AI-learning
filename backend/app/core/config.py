@@ -113,6 +113,28 @@ class Settings(BaseSettings):
     web_scope_timeout_seconds: float = 20.0
     web_scope_max_tokens: int = 1000
 
+    # 视频出题：上传视频或 B 站链接 → ffmpeg 抽音轨按段切 → 硅基流动语音转写（与知识库共用 SILICONFLOW_API_KEY）
+    video_enabled: bool = True
+    bilibili_enabled: bool = True
+    video_max_upload_bytes: int = 200 * 1024 * 1024
+    # 视频时长上限（秒）
+    video_max_seconds: int = 1800
+    # 转写按段进行（接口不返回时间戳），每段的起止时间就是出处里的时间点
+    video_segment_seconds: int = 60
+    video_transcribe_concurrency: int = 4
+    # 同时处理的视频数（下载 / 抽音轨 / 转写）
+    video_process_concurrency: int = 2
+    # 解析结果在内存里保留多久（秒），过期后要重新上传
+    video_job_ttl_seconds: int = 7200
+    # 上传与处理用的临时目录，处理结束即删；启动时清空
+    video_tmp_dir: str = "data/video_tmp"
+    asr_model: str = "FunAudioLLM/SenseVoiceSmall"
+    asr_timeout_seconds: float = 60.0
+    # 下载 B 站音频的超时（秒）
+    bilibili_timeout_seconds: float = 120.0
+    # 交给出题模型的文字稿材料总长度上限（字符）
+    video_material_max_chars: int = 6000
+
     # wx.request 不受 CORS 限制，但 wx.loadFontFace 加载字体要求 CORS，小程序来源是 servicewechat.com；
     # localhost:10086 是 H5 本地调试地址
     cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]
@@ -150,6 +172,11 @@ class Settings(BaseSettings):
     def kb_enabled(self) -> bool:
         """配置了 Embedding Key 才开启知识库；接口可用还要求数据库可用（见 require_kb）。"""
         return bool(self.siliconflow_api_key)
+
+    @property
+    def video_available(self) -> bool:
+        """视频出题要用硅基流动转写，没配 Key 时关闭。"""
+        return self.video_enabled and bool(self.siliconflow_api_key)
 
     @property
     def wechat_mock_login(self) -> bool:

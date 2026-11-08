@@ -16,6 +16,9 @@ from app.rag.embedding import SiliconFlowEmbedder
 from app.rag.vector_store import ChromaVectorStore
 from app.repositories import kb_repository
 from app.services.kb_ingest import KbIngestor
+from app.services.bilibili import BilibiliClient
+from app.services.transcriber import SiliconFlowTranscriber
+from app.services.video_jobs import VideoJobManager
 from app.services.web_page import LocalPageFetcher, PageReader, TavilyExtractor
 from app.services.web_search import TavilySearcher
 from app.utils.content_filter import get_content_filter
@@ -138,6 +141,21 @@ async def lifespan(app: FastAPI):
         web_owned = True
         logger.info("网页出题已开启（本地抓取%s）", "，Tavily Extract 兜底" if use_tavily else "")
 
+    # 视频出题的解析任务（测试可预先在 app.state 放假实现）
+    video_owned = False
+    if app.state.video_jobs is None and settings.video_available:
+        app.state.video_jobs = VideoJobManager(
+            settings,
+            transcriber=SiliconFlowTranscriber(settings),
+            bilibili=BilibiliClient(settings) if settings.bilibili_enabled else None,
+            content_filter=app.state.content_filter or get_content_filter(),
+        )
+        app.state.video_jobs.clear_tmp()
+        video_owned = True
+        logger.info("视频出题已开启（%s%s）", settings.asr_model, "，支持 B 站链接" if settings.bilibili_enabled else "")
+    elif not settings.video_available:
+        logger.info("视频出题关闭（VIDEO_ENABLED=false 或未配置 SILICONFLOW_API_KEY）")
+
     if app.state.db is not None:
         await _recover_documents(app.state.db)
     _clear_upload_dir(Path(settings.kb_upload_dir))
@@ -146,6 +164,9 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         await _close_kb(app, kb_owned)
+        if video_owned:
+            await app.state.video_jobs.aclose()
+            app.state.video_jobs = None
         if web_owned:
             await app.state.page_reader.aclose()
             app.state.page_reader = None
@@ -165,6 +186,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.wechat = None
     app.state.web_searcher = None
     app.state.page_reader = None
+    app.state.video_jobs = None
     # 知识库组件：lifespan 里创建；测试可在启动前放入假实现（embedder / vector_store / content_filter）
     app.state.embedder = None
     app.state.vector_store = None

@@ -28,6 +28,8 @@ from app.services.report_service import ReportService
 from app.services.review_service import ReviewService
 from app.services.stats_service import StatsService
 from app.services.user_service import UserService
+from app.services.video_jobs import VideoJobManager
+from app.services.video_quiz_service import VideoQuizService
 from app.services.web_quiz_service import WebQuizService
 from app.services.wechat_auth import WeChatAuthClient
 from app.utils.content_filter import ContentFilter, get_content_filter
@@ -35,6 +37,7 @@ from app.utils.content_filter import ContentFilter, get_content_filter
 MSG_DB_UNAVAILABLE = "用户系统暂时不可用，请稍后重试"
 MSG_KB_UNAVAILABLE = "知识库功能暂时不可用，请稍后重试"
 MSG_WEB_UNAVAILABLE = "网页出题暂时不可用，请稍后重试"
+MSG_VIDEO_UNAVAILABLE = "视频出题暂时不可用，请稍后重试"
 # 学习结论只要一两句话
 INSIGHT_MAX_TOKENS = 400
 
@@ -264,3 +267,24 @@ def require_web_quiz_service(
     return WebQuizService(
         reader, judge, generator, settings=request.app.state.settings, content_filter=content_filter
     )
+
+
+# ---------- 视频出题 ----------
+
+
+def require_video_jobs(request: Request) -> VideoJobManager:
+    """没配 SILICONFLOW_API_KEY 或 VIDEO_ENABLED=false 时视频接口一律 5000 / 503。"""
+    jobs = getattr(request.app.state, "video_jobs", None)
+    if jobs is None:
+        raise BizError(ErrorCode.INTERNAL_ERROR, MSG_VIDEO_UNAVAILABLE, http_status=503)
+    return jobs
+
+
+def require_video_quiz_service(
+    request: Request,
+    jobs: VideoJobManager = Depends(require_video_jobs),
+    judge: WebScopeJudge = Depends(get_web_scope_judge),
+    generator: WebQuizGenerator = Depends(get_web_quiz_generator),
+    content_filter: ContentFilter = Depends(get_content_filter),
+) -> VideoQuizService:
+    return VideoQuizService(jobs, judge, generator, settings=request.app.state.settings, content_filter=content_filter)
