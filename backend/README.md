@@ -85,6 +85,49 @@ python -m scripts.smoke_quiz # 真模型冒烟：连续出题 10 次 + 生成 1 
 - **隐私**：上传资料提取出的全文、以及带重点出题时填写的重点（和检索规划 Agent 写的知识库查询词），会发送给硅基流动（`BAAI/bge-m3`）做向量化。不配 Key 就完全不发送。联网查询词的说明见「出题前的检索规划」。
 - 上传大小由后端自己计数判断（不信任 `Content-Length`），但请求体会先被完整接收；生产环境请在反向代理上也限制请求体大小（如 nginx `client_max_body_size 21m`）。
 
+### 视频出题
+
+都要求登录。没配 `SILICONFLOW_API_KEY`（转写用）或 `VIDEO_ENABLED=false` 时视频接口返回 5000（HTTP 503）。
+
+| 接口 | 说明 |
+| --- | --- |
+| `POST /api/v1/video/uploads` | 上传视频（multipart，字段 `file`；可选字段 `name` 为原始文件名，用作视频名）：mp4 / mov / m4v / webm / mkv / 3gp / avi / flv，≤ 200 MB（自己计数，超限立即停止）。立即返回 `processing` 的任务，后台解析 |
+| `POST /api/v1/video/links` | B 站链接：`{url}`（链接、分享文案或 BV 号；只认 bilibili.com / b23.tv）→ 立即返回 `processing` 的任务 |
+| `GET /api/v1/video/jobs/{job_id}` | 解析任务状态（只能查自己的）：`status`（processing / ready / failed）、`stage`（download / extract / transcribe / done）、`progress_done` / `progress_total`（转写段数）、`duration_seconds`、`via`（asr / subtitle）、`char_count`、`fail_reason`。前端每 2 秒轮询 |
+| `POST /api/v1/video/quiz` | 用视频出题：`job_id`、`focus`（≤200 字）、`start_seconds` / `end_seconds`（只学其中一段，选填）、`question_count`、`difficulty` → `source_type=video`，每题 `sources` 带视频名、文字稿摘录、`start_seconds`（出处时间点），B 站视频还带 `url`。登录后存为一话 |
+
+解析（`app/services/video_jobs.py`，进程内 asyncio 任务）：
+
+```text
+上传：ffmpeg 探测（不是视频 / 没有声音 / 超过 30 分钟 → 失败）→ 抽音轨按 60 秒切段（16 kHz 单声道 mp3）→ 并发转写
+B 站：yt-dlp 取信息（超过 30 分钟 → 失败）→ 有中文 CC 字幕用字幕（每行带时间）；没有则下载音频 → 同上切段转写
+之后：命中敏感词的段丢弃 → 可见字数 < 100 判为“没识别到讲话内容” → ready
+```
+
+- **为什么切段**：硅基流动 `/audio/transcriptions`（`FunAudioLLM/SenseVoiceSmall`）只返回文本、不带时间戳；按 60 秒切段逐段转写，每段的起始秒数就是出处时间点（精度 1 分钟；字幕精确到那一句）。429 / 5xx 重试 1 次，失败段超过 1/5 判为转写失败。
+- 每人同时只能有 1 个处理中的任务（4022），全局并发 `VIDEO_PROCESS_CONCURRENCY`。结果只在内存里保留 2 小时，过期或重启后要重新上传（与知识库一样，后端只能单 worker）。临时文件在 `VIDEO_TMP_DIR`，处理结束即删，启动时清空；**上传的视频不保留**。
+- 出题：与网页出题共用 `material_quiz.py`（AI 判断主题与范围 → 编号材料 → 出题 → 出处），视频用自己的措辞（文字稿可能有同音错字和口误，不考错字；题目里不出现时间点）。文字稿按时间顺序拼成约 500 字一块，材料格式 `[n] 《视频名》02:00–04:00`；出处时间点按摘录落在块里的哪一段取那一段的起始秒数。选了时间段时只用和它有重叠的段，一段都没有返回 4054。
+- **B 站链接**：只开 yt-dlp 的 `BiliBili` 一个 extractor，b23.tv 短链自己解析一跳再校验，不会被引到其他站点。不登录拿不到 AI 字幕，多数视频走“下载音频 → 转写”。B 站有风控：2026-11-08 实测同一视频先能下载、几次请求后返回 HTTP 567，失败时提示“保存到手机后上传”。yt-dlp 需要定期升级（`pip install -U yt-dlp`）以跟上站点变化。是否在正式环境开放 B 站链接，还需要结合平台条款评估（`BILIBILI_ENABLED=false` 即关闭）。
+- **隐私**：音频（或 B 站字幕）发送给硅基流动转写；上传的视频和中间文件处理完即删除，文字稿只在内存里保留 2 小时。
+- 真模型冒烟：`python -m scripts.smoke_video --video 讲解.mp4 [--bilibili <链接>] [-n 2] [--range 60-180] [--show]`；转写不可用时加 `--fake-asr 讲稿.json` 用讲稿替身验证出题与时间点（见脚本说明）。
+
+### 网页出题
+
+登录可选（同文本出题：带 token 时题库存为该用户的一话）。`WEB_FETCH_ENABLED=false` 时网页接口返回 5000（HTTP 503）。
+
+| 接口 | 说明 |
+| --- | --- |
+| `POST /api/v1/web/preview` | 读网页给预览：`{url}`（≤2000 字，没写协议时补 `https://`）→ `{url（跳转后的最终地址）, site, title, char_count, read_minutes, via: local\|tavily}`。抓取结果缓存 10 分钟，随后出题不再重复抓取 |
+| `POST /api/v1/web/quiz` | 用网页出题：`url`、`focus`（可选，≤200 字）、`question_count`、`difficulty` → 与文本出题同结构的题库，`source_type=web`，每题 `sources` 带网页标题、原文摘录和 `url` |
+
+流程：抓网页（本地优先，Tavily Extract 兜底）→ 正文按段落切块（约 500 字，不重叠）→ **AI 判断主题与范围**：页面有没有可学的内容（没有 → 4032，提示语带上 AI 给的原因）、这篇讲什么、最值得考的 3–8 个知识点、承载它们的正文块（排除导航、广告、评论、推广等）→ 按 AI 给的优先级取块到 6000 字，按原文顺序编号 → 只依据这些片段出题，围绕知识点、照顾重点，每题必须有出处（无效出处换保守 Prompt 重试）。
+
+- 范围判断失败（模型报错、超时 20 秒、给的块编号全部无效）时降级为按原文顺序取材、不带知识点，照常出题。AI 选的块合计不到材料上限的 1/3 时，按原文顺序补上其余块，避免材料太少出不够题。
+- **抓取与 SSRF 防护**：只允许 http / https、端口 80 / 443、URL 不能带用户名密码；域名解析出的每个 IP 都必须是公网地址（拒绝回环、内网、链路本地含 169.254.169.254、CGNAT、组播等）；重定向手动跟随、最多 3 跳、每跳重新校验；正文解压后不超过 10 MB（流式计数）；只接受 HTML / 纯文本。残留风险：DNS rebinding（校验与连接之间解析结果变化），需要时在出口网络层再加限制。
+- **Tavily 兜底**：本地读不出正文（动态页面）、被拒绝访问（401 / 403 / 429 / 5xx）或打不开时，配了 `TAVILY_API_KEY` 就用 Tavily Extract（basic，每 5 个成功网址 1 credit）再试一次；地址不合法 / 内网、不是网页、太大不兜底。实测百度百科、知乎、部分 SPA 两边都读不了，返回本地的原因。
+- **隐私**：后端会访问用户给的网址；兜底时网址会发给 Tavily。日志只记 host、抓取方式、字数、块数和范围判断结果，不记网址路径和正文。
+- 真模型冒烟：`python -m scripts.smoke_quiz --url <网址> [--url ...] [-n 2] [--focus "..."] [--show]`。2026-11-08 实测：公众号文章（解压后约 4 MB）预览 2.7 秒、出 5 题 9–17 秒，摘录全部能在原文找到；GitHub 登录页返回 4032。
+
 鉴权：`Authorization: Bearer <JWT>`（HS256，默认 30 天）。`/user/*`（登录除外）必须登录；出题、报告是**可选鉴权**，没有或无效 token 时按匿名处理、照常返回，只是不落库。
 
 经验金币：每答对一题 +10 经验、+5 金币（与前端、原型一致）。同一用户同一话只结算一次（`answer_records` 上 `user_id + quiz_id` 唯一），重复提交、AI 复盘失败后重试都不会重复加。
@@ -107,6 +150,15 @@ python -m scripts.smoke_quiz # 真模型冒烟：连续出题 10 次 + 生成 1 
 | 4021 | 文件大小不合法（空文件或超过 20 MB） |
 | 4022 | 超出数量上限（知识库 10 个 / 资料 50 份） |
 | 4023 | 没有可出题的资料（所选资料都还没处理完或处理失败） |
+| 4030 | 网页：链接格式不对，或不是公开的网页地址（内网、非 80 / 443 端口等） |
+| 4031 | 网页：打不开、超时、不存在，或网站拒绝访问（可能要登录） |
+| 4032 | 网页：读不出正文，或 AI 判断这个网页没有可以出题的知识内容 |
+| 4033 | 网页：不是网页（PDF、图片、视频等）或网页太大 |
+| 4050 | 视频：文件类型不支持，或文件是空的 |
+| 4051 | 视频：超过 200 MB（时长超限在后台判断，记在任务的 `fail_reason`） |
+| 4052 | 视频：不是 B 站链接，或暂时不支持 B 站链接 |
+| 4053 | 视频：还没处理完，或处理失败 |
+| 4054 | 视频：所选时间段里没有讲话内容 |
 | 4040 | 记录不存在（或不是自己的） |
 | 5000 | 服务内部错误（HTTP 500）；用户系统 / 知识库不可用时为 HTTP 503 |
 
@@ -131,6 +183,37 @@ python -m scripts.smoke_quiz # 真模型冒烟：连续出题 10 次 + 生成 1 
 | `KB_CHUNK_CHARS` / `KB_CHUNK_OVERLAP` | `500` / `80` | 切块长度与重叠（字符）；PDF 的块不跨页 |
 | `KB_RETRIEVE_TOP_K` / `KB_MATERIAL_MAX_CHARS` | `12` / `6000` | 带重点出题时检索的片段数 / 交给模型的材料总长 |
 | `KB_PROCESS_CONCURRENCY` | `2` | 同时处理的资料数 |
+
+## 视频出题配置
+
+| 配置 | 默认 | 说明 |
+| --- | --- | --- |
+| `VIDEO_ENABLED` | `true` | 视频出题总开关；另外要求配了 `SILICONFLOW_API_KEY`（转写），否则视频接口返回 5000 |
+| `BILIBILI_ENABLED` | `true` | 是否支持 B 站链接（关掉后只能上传视频） |
+| `VIDEO_MAX_UPLOAD_BYTES` / `VIDEO_MAX_SECONDS` | `209715200` / `1800` | 200 MB / 30 分钟 |
+| `VIDEO_SEGMENT_SECONDS` | `60` | 转写切段长度，也是出处时间点的精度 |
+| `VIDEO_TRANSCRIBE_CONCURRENCY` / `VIDEO_PROCESS_CONCURRENCY` | `4` / `2` | 同时转写的段数 / 同时处理的视频数 |
+| `VIDEO_JOB_TTL_SECONDS` | `7200` | 解析结果在内存里保留多久 |
+| `VIDEO_TMP_DIR` | `data/video_tmp` | 上传与中间文件，处理结束即删，启动时清空 |
+| `ASR_MODEL` / `ASR_TIMEOUT_SECONDS` | `FunAudioLLM/SenseVoiceSmall` / `60` | 硅基流动转写模型 |
+| `BILIBILI_TIMEOUT_SECONDS` | `120` | 下载 B 站音频的超时 |
+| `VIDEO_MATERIAL_MAX_CHARS` | `6000` | 交给出题模型的文字稿材料总长 |
+
+依赖：`imageio-ffmpeg`（自带静态 ffmpeg，部署时不用另装）、`yt-dlp`。
+
+## 网页出题配置
+
+| 配置 | 默认 | 说明 |
+| --- | --- | --- |
+| `WEB_FETCH_ENABLED` | `true` | 网页出题总开关；关掉后网页接口返回 5000 |
+| `WEB_EXTRACT_TAVILY_FALLBACK` | `true` | 本地读不出来时用 Tavily Extract 再试（还需要 `TAVILY_API_KEY`） |
+| `WEB_FETCH_TIMEOUT_SECONDS` | `10` | 本地抓取的总超时（含重定向） |
+| `WEB_FETCH_MAX_BYTES` | `10485760` | 网页解压后的字节上限（公众号文章约 4 MB） |
+| `WEB_FETCH_MAX_REDIRECTS` / `WEB_FETCH_CONCURRENCY` | `3` / `4` | 重定向跳数 / 同时抓取的网页数 |
+| `WEB_PAGE_MAX_CHARS` / `WEB_PAGE_MIN_CHARS` | `60000` / `200` | 正文超过上限直接截掉；少于下限判为读不出正文 |
+| `WEB_PAGE_CACHE_SECONDS` | `600` | 预览和出题共用抓取结果的时长（进程内缓存，单 worker） |
+| `WEB_MATERIAL_MAX_CHARS` | `6000` | 交给出题模型的网页材料总长 |
+| `WEB_SCOPE_TIMEOUT_SECONDS` / `WEB_SCOPE_MAX_TOKENS` | `20` / `1000` | 范围判断的超时与输出上限（温度同 `AGENT_TEMPERATURE`） |
 
 ## 出题前的检索规划（Agent）
 
