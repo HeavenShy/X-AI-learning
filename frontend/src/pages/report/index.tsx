@@ -14,6 +14,7 @@ import { Btn, SafeBottom } from '../../components/ui'
 import { formatDuration } from '../../core/format'
 import { WEAK_BELOW } from '../../core/mastery'
 import { sessionStats } from '../../core/session'
+import { webQuizPage, webUrlOf } from '../../core/web'
 import { generateReport, getQuizDetail } from '../../services/api'
 import { ensureReport } from '../../services/report-flow'
 import { ApiError } from '../../services/request'
@@ -41,6 +42,8 @@ interface ReportView {
   again: { text: string; count: QuestionCount; difficulty: DifficultyOption }
   /** 知识库出的题：“再来一话”回到知识库列表 */
   fromKb: boolean
+  /** 网页出的题：“再来一话”回到网页出题页并带上这个链接 */
+  webUrl: string | null
 }
 
 /** 本次闯关 */
@@ -76,7 +79,8 @@ function useCurrentView(enabled: boolean): ReportView | null {
       count: session.quiz.questions.length as QuestionCount,
       difficulty: session.difficulty
     },
-    fromKb: session.quiz.source_type === 'knowledge_base'
+    fromKb: session.quiz.source_type === 'knowledge_base',
+    webUrl: webUrlOf(session.quiz)
   }
 }
 
@@ -128,7 +132,8 @@ function useHistoryView(quizId: string | undefined) {
       status: state.reportStatus,
       data: state.reportStatus === 'done' ? d.report : null,
       again: { text: d.quiz.user_input, count: d.quiz.questions.length as QuestionCount, difficulty: d.difficulty },
-      fromKb: d.quiz.source_type === 'knowledge_base'
+      fromKb: d.quiz.source_type === 'knowledge_base',
+      webUrl: webUrlOf(d.quiz)
     }
   }
   return { state, view, loadDetail, retry: () => state.phase === 'ready' && retryReport(state.detail) }
@@ -180,6 +185,11 @@ export default function ReportPage() {
     // 知识库出的题没记下用的是哪个库：回到“我的知识库”重新选
     if (view.fromKb) {
       Taro.reLaunch({ url: '/pages/kb-list/index' })
+      return
+    }
+    // 网页出的题：回到网页出题页，链接预填好，可以改重点和题量
+    if (view.webUrl) {
+      Taro.reLaunch({ url: webQuizPage(view.webUrl) })
       return
     }
     useStore.getState().requestGenerate(view.again)

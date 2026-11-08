@@ -1,0 +1,274 @@
+/* 用网页出题（原型 02-input-and-library.html 第 3 屏） */
+.web-quiz {
+  .field {
+    display: block;
+    margin-top: 14px;
+  }
+  .field.first {
+    margin-top: 4px;
+  }
+  .field-t {
+    display: block;
+    font: 400 17px/1.2 var(--display);
+    margin-bottom: 6px;
+  }
+
+  /* 链接输入框 */
+  .wq-input {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 0 8px 0 12px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+  }
+  .wq-input.is-focus {
+    box-shadow: 0 0 0 3px var(--blue);
+  }
+  .wq-input.is-error {
+    border-color: var(--red);
+  }
+  .wq-input-i {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+  .wq-input-el {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    font-size: 15px;
+    font-family: var(--body);
+    color: var(--ink);
+  }
+  /* H5 端 Taro 会把 Input 包一层，内层原生 input 不继承字体（同首页 Textarea） */
+  .wq-input-el input {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 0;
+  }
+  .wq-clear {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wq-clear .icon {
+    width: 12px;
+    height: 12px;
+  }
+  .wq-placeholder {
+    color: #8a929b;
+  }
+  .wq-clip {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 7px 10px;
+    background: var(--green-soft);
+    border: 2px solid var(--green);
+    font-size: 13px;
+  }
+  .wq-clip .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+
+  /* 预览卡片 */
+  .wq-card {
+    margin-top: 12px;
+    padding: 10px 12px 12px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+  }
+  .wq-card.is-error {
+    border-color: var(--red);
+    background: var(--red-soft);
+  }
+  .wq-card-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .wq-card-t {
+    font: 400 16px/1.2 var(--display);
+  }
+  .wq-preview {
+    display: flex;
+  }
+  .wq-thumb {
+    flex: none;
+    width: 72px;
+    height: 56px;
+    margin-right: 10px;
+    border: 2px solid var(--ink);
+    background: var(--halftone), var(--yellow-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wq-thumb .icon {
+    width: 24px;
+    height: 24px;
+  }
+  .wq-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .wq-site {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .wq-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .wq-small {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .wq-fail-h {
+    display: block;
+    font: 400 17px/1.3 var(--display);
+    color: #b3201c;
+  }
+  .wq-fail-p {
+    display: block;
+    margin-top: 4px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .wq-fixes {
+    margin-top: 10px;
+  }
+  .wq-fix {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+  }
+  .wq-fix + .wq-fix {
+    margin-top: 8px;
+  }
+  .wq-fix-pressed {
+    background: var(--yellow-soft);
+  }
+  .wq-fix-t {
+    flex: 1;
+    min-width: 0;
+  }
+  .wq-fix-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .wq-chev {
+    flex: none;
+    font-size: 20px;
+    margin-left: 8px;
+  }
+  .wq-err {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--red);
+    line-height: 1.5;
+  }
+  .wq-err .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 1px 6px 0 0;
+  }
+
+  /* 重点、题量（同知识库出题页） */
+  .wq-focus {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 10px 12px 6px;
+  }
+  .wq-focus-el {
+    display: block;
+    width: 100%;
+    height: 60px;
+    font-size: 15px;
+    line-height: 1.6;
+    font-family: var(--body);
+    color: var(--ink);
+    background: transparent;
+  }
+  .wq-focus-el textarea {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    outline: none;
+    resize: none;
+    padding: 0;
+  }
+  .wq-count {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #8a929b;
+  }
+  .wq-len {
+    display: flex;
+  }
+  .wq-len-btn {
+    flex: 1;
+    height: 46px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-size: 12.5px;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .wq-len-btn + .wq-len-btn {
+    margin-left: 8px;
+  }
+  .wq-len-btn.is-on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .wq-len-n {
+    display: block;
+    font: 400 17px/1.1 var(--display);
+  }
+  .wq-tip {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .wq-pad {
+    height: 16px;
+  }
+}

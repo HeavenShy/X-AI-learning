@@ -51,7 +51,7 @@ export function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function formatChars(n: number): string {
+export function formatChars(n: number): string {
   return n >= 10000 ? `${(n / 10000).toFixed(1).replace(/\.0$/, '')} 万字` : `${n} 字`
 }
 
@@ -63,8 +63,9 @@ export function documentSubline(doc: KbDocument): string {
   return parts.join('，')
 }
 
-/** 讲解里的出处行：出处：文件名，第 N 页（没有页码只显示文件名） */
+/** 讲解里的出处行：出处：文件名，第 N 页（没有页码只显示文件名）；网页出题为“出处：网页《标题》” */
 export function formatSource(src: QuestionSource): string {
+  if (src.url) return `出处：网页《${src.document_name}》`
   return src.page != null ? `出处：${src.document_name}，第 ${src.page} 页` : `出处：${src.document_name}`
 }
 

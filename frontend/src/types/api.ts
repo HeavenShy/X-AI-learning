@@ -10,14 +10,17 @@ export interface Option {
   text: string
 }
 
-/** 知识库出题的出处快照（资料删除后仍随题目保留） */
+/** 知识库 / 网页出题的出处快照（资料删除后仍随题目保留） */
 export interface QuestionSource {
   document_id: string
+  /** 知识库为文件名，网页为网页标题 */
   document_name: string
-  /** PDF 有页码；Word / TXT / Markdown 为 null */
+  /** PDF 有页码；Word / TXT / Markdown / 网页为 null */
   page: number | null
   /** 不超过 120 字的原文摘录 */
   quote: string
+  /** 网页出题的网页地址；知识库出题为 null（旧数据没有） */
+  url?: string | null
 }
 
 export interface Question {
@@ -33,7 +36,7 @@ export interface Question {
   sources?: QuestionSource[]
 }
 
-export type SourceType = 'text' | 'knowledge_base'
+export type SourceType = 'text' | 'knowledge_base' | 'web'
 
 export interface Quiz {
   quiz_id: string
@@ -111,6 +114,14 @@ export const ErrorCode = {
   LIMIT_EXCEEDED: 4022,
   /** 知识库：所选资料都还没准备好 */
   NO_READY_DOCUMENTS: 4023,
+  /** 网页：链接格式不对 / 不是公开网址 */
+  URL_INVALID: 4030,
+  /** 网页：打不开、超时、要登录或拒绝访问 */
+  PAGE_UNREACHABLE: 4031,
+  /** 网页：读不出正文，或 AI 判断没有可学的内容 */
+  PAGE_NO_CONTENT: 4032,
+  /** 网页：不是网页（PDF、图片等）或太大 */
+  PAGE_NOT_SUPPORTED: 4033,
   NOT_FOUND: 4040,
   INTERNAL_ERROR: 5000,
   /** 前端自定义：网络不通 / 超时 */
@@ -335,4 +346,23 @@ export interface TreeTopic {
 export interface KnowledgeTree {
   topic_count: number
   topics: TreeTopic[]
+}
+
+// ---------- 网页出题 ----------
+
+export interface WebPreview {
+  /** 跳转后的最终地址 */
+  url: string
+  site: string
+  title: string
+  char_count: number
+  read_minutes: number
+  via: 'local' | 'tavily'
+}
+
+export interface WebQuizRequest {
+  url: string
+  focus: string
+  question_count: QuestionCount
+  difficulty: DifficultyOption
 }

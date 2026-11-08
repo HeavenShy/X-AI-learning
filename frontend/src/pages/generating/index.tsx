@@ -3,6 +3,8 @@
  * 后端是一次性返回，三步进度按预计时长在前端推进；结果回来时全部完成。
  * 知识库出题（genRequest.kb）调知识库出题接口，步骤换成“读取资料 / 找到相关片段 / 出题并写讲解”；
  * 资料未就绪（4023）或重点不合规（4003）时回到出题设置页提示。
+ * 网页出题（genRequest.web）调网页出题接口，步骤是“读取网页 / 判断主题与范围 / 出题并写讲解”；
+ * 网页打不开、读不出正文、AI 判断没有可学内容（4030–4033）或不合规（4003）时回到网页出题页提示。
  */
 
 import { Text, View } from '@tarojs/components'
@@ -12,7 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import NavBar, { goBackOrHome } from '../../components/NavBar'
 import { Btn, SafeBottom } from '../../components/ui'
 import { displayTopic, planText } from '../../core/format'
-import { generateKbQuiz, generateQuiz } from '../../services/api'
+import { generateKbQuiz, generateQuiz, generateWebQuiz } from '../../services/api'
 import { ApiError, type Pending } from '../../services/request'
 import { useStore } from '../../store'
 import { ErrorCode, type Quiz } from '../../types/api'
@@ -20,6 +22,15 @@ import './index.scss'
 
 /** 各题量的预计耗时（毫秒），来自真模型冒烟的中位数 */
 const EXPECTED_MS: Record<number, number> = { 3: 5000, 5: 7000, 10: 11000 }
+/** 网页出题多了抓取和范围判断 */
+const WEB_EXTRA_MS = 4000
+const WEB_ERRORS: number[] = [
+  ErrorCode.URL_INVALID,
+  ErrorCode.PAGE_UNREACHABLE,
+  ErrorCode.PAGE_NO_CONTENT,
+  ErrorCode.PAGE_NOT_SUPPORTED,
+  ErrorCode.CONTENT_NOT_ALLOWED
+]
 
 type Phase = 'running' | 'failed'
 type StepState = 'done' | 'doing' | 'wait'
@@ -50,18 +61,20 @@ export default function Generating() {
     }
     setPhase('running')
     setStep(0)
-    const expected = EXPECTED_MS[req.count] ?? 7000
+    const expected = (EXPECTED_MS[req.count] ?? 7000) + (req.web ? WEB_EXTRA_MS : 0)
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 1)), 1200))
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 2)), Math.max(2400, expected * 0.45)))
 
-    const p = req.kb
-      ? generateKbQuiz(req.kb.kbId, {
-          document_ids: req.kb.documentIds,
-          focus: req.text,
-          question_count: req.count,
-          difficulty: req.difficulty
-        })
-      : generateQuiz({ user_input: req.text, question_count: req.count, difficulty: req.difficulty })
+    const p = req.web
+      ? generateWebQuiz({ url: req.web.url, focus: req.text, question_count: req.count, difficulty: req.difficulty })
+      : req.kb
+        ? generateKbQuiz(req.kb.kbId, {
+            document_ids: req.kb.documentIds,
+            focus: req.text,
+            question_count: req.count,
+            difficulty: req.difficulty
+          })
+        : generateQuiz({ user_input: req.text, question_count: req.count, difficulty: req.difficulty })
     pending.current = p
     p.promise
       .then((quiz) => {
@@ -73,6 +86,12 @@ export default function Generating() {
       .catch((err: ApiError) => {
         clearTimers()
         if (err.code === ErrorCode.ABORTED) return
+        // 网页：打不开 / 读不出正文 / 没有可学内容 / 不合规，回到网页出题页提示原因和替代方式
+        if (req.web && WEB_ERRORS.includes(err.code)) {
+          useStore.getState().setWebError({ code: err.code, message: err.message })
+          goBackOrHome()
+          return
+        }
         // 知识库：资料没准备好 / 重点不合规 / 库被删了，回到出题设置页提示
         if (
           req.kb &&
@@ -111,7 +130,13 @@ export default function Generating() {
 
   const stepState = (i: number): StepState => (step > i ? 'done' : step === i ? 'doing' : 'wait')
   const focus = displayTopic(req.text)
-  const steps = req.kb
+  const steps = req.web
+    ? [
+        { title: '读取网页', sub: `《${req.web.title.slice(0, 14)}》` },
+        { title: '判断主题与范围', sub: focus ? `围绕：${focus.slice(0, 14)}` : '挑出核心段落和知识点' },
+        { title: '出题并写讲解', sub: `${planText(req.count)}，附原文摘录` }
+      ]
+    : req.kb
     ? [
         { title: '读取资料', sub: `知识库：${req.kb.kbName.slice(0, 14)}` },
         { title: '找到相关片段', sub: focus ? `围绕：${focus.slice(0, 14)}` : '从资料前中后均匀挑选' },
@@ -129,7 +154,12 @@ export default function Generating() {
       <NavBar variant='title' title='出题中' left={phase === 'failed' ? 'back' : 'none'} />
       <View className='content'>
         <View className='gen-quote'>
-          {req.kb ? (
+          {req.web ? (
+            <>
+              用网页出题：<Text className='gen-quote-b'>{req.web.title}</Text>
+              {focus ? `，重点：${focus}` : ''}
+            </>
+          ) : req.kb ? (
             <>
               用知识库出题：<Text className='gen-quote-b'>{req.kb.kbName}</Text>
               {focus ? `，重点：${focus}` : ''}
@@ -184,7 +214,7 @@ export default function Generating() {
             <View className='fail-foot'>
               <Btn onClick={() => setAttempt((a) => a + 1)}>重新出题</Btn>
               <Btn kind='ghost' className='mt14' onClick={() => goBackOrHome()}>
-                {req.kb ? '改一下设置' : '改一下内容'}
+                {req.kb || req.web ? '改一下设置' : '改一下内容'}
               </Btn>
             </View>
           </>

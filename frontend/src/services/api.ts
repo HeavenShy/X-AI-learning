@@ -18,7 +18,9 @@ import type {
   ReviewAnswerRequest,
   ReviewAnswerResult,
   StatsInsight,
-  StatsRange
+  StatsRange,
+  WebPreview,
+  WebQuizRequest
 } from '../types/api'
 import { authed, authedUpload } from './auth'
 
@@ -83,3 +85,11 @@ export const deleteDocument = (kbId: string, documentId: string) =>
 /** 只依据资料出题、不联网；同文本出题一样存为一话。检索 + 最多 3 次重试 */
 export const generateKbQuiz = (kbId: string, req: KbQuizRequest) =>
   authed<Quiz>('POST', `${kbPath(kbId)}/quiz`, req, 120_000)
+
+// ---------- 网页出题（登录可选；登录后同文本出题一样存为一话） ----------
+
+/** 后端抓网页、提正文（必要时 Tavily 兜底），结果缓存 10 分钟，随后出题不再重复抓取 */
+export const previewWebPage = (url: string) => authed<WebPreview>('POST', '/api/v1/web/preview', { url }, 30_000)
+
+/** AI 判断主题与范围后只依据网页出题，每题带原文摘录；抓取 + 范围判断 + 最多 3 次重试 */
+export const generateWebQuiz = (req: WebQuizRequest) => authed<Quiz>('POST', '/api/v1/web/quiz', req, 120_000)

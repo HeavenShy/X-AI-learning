@@ -11,6 +11,7 @@ import { estimateMinutes, formatInterrupted, INPUT_MAX_CHARS, validateInput } fr
 import { levelOf, xpBarPercent } from '../../core/level'
 import { resumeTitle } from '../../core/session'
 import { TAB_INDEX } from '../../core/tabs'
+import { isBareUrl, webQuizPage } from '../../core/web'
 import { refreshProfile } from '../../services/account'
 import { useStore } from '../../store'
 import type { QuestionCount } from '../../types/api'
@@ -51,6 +52,11 @@ export default function Index() {
 
   const onStart = () => {
     if (empty) return
+    // 输入框里贴的是一个网址：转到网页出题页，链接带过去
+    if (isBareUrl(text)) {
+      Taro.navigateTo({ url: webQuizPage(text.trim()) })
+      return
+    }
     const err = validateInput(text)
     if (err) {
       setError(err)
@@ -84,7 +90,7 @@ export default function Index() {
           />
           <View className='in-foot'>
             <View className='in-tools'>
-              {/* 传文档：打开“我的知识库”上传资料后按资料出题；贴网址、贴视频为 P1 功能，先置灰 */}
+              {/* 传文档：打开“我的知识库”上传资料后按资料出题；贴网址：用网页出题；贴视频为 P1 功能，先置灰 */}
               <View
                 className='in-tool is-on'
                 hoverClass='in-tool-pressed'
@@ -93,8 +99,12 @@ export default function Index() {
                 <Icon name='docInk' />
                 <Text>传文档</Text>
               </View>
-              <View className='in-tool'>
-                <Icon name='link' />
+              <View
+                className='in-tool is-on'
+                hoverClass='in-tool-pressed'
+                onClick={() => Taro.navigateTo({ url: webQuizPage() })}
+              >
+                <Icon name='linkInk' />
                 <Text>贴网址</Text>
               </View>
               <View className='in-tool'>
