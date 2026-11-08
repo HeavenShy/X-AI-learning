@@ -15,6 +15,8 @@ from app.llm.kb_quiz_chain import KbQuizGenerator, LangChainKbQuizGenerator
 from app.llm.langchain_factory import create_chat_model
 from app.llm.quiz_chain import LangChainQuizGenerator, QuizGenerator
 from app.llm.report_chain import LangChainReportGenerator
+from app.llm.web_quiz_chain import LangChainWebQuizGenerator, WebQuizGenerator
+from app.llm.web_scope_chain import LangChainWebScopeJudge, WebScopeJudge
 from app.rag.vector_store import VectorStore
 from app.services.history_service import HistoryService
 from app.services.kb_ingest import KbIngestor
@@ -26,11 +28,13 @@ from app.services.report_service import ReportService
 from app.services.review_service import ReviewService
 from app.services.stats_service import StatsService
 from app.services.user_service import UserService
+from app.services.web_quiz_service import WebQuizService
 from app.services.wechat_auth import WeChatAuthClient
 from app.utils.content_filter import ContentFilter, get_content_filter
 
 MSG_DB_UNAVAILABLE = "用户系统暂时不可用，请稍后重试"
 MSG_KB_UNAVAILABLE = "知识库功能暂时不可用，请稍后重试"
+MSG_WEB_UNAVAILABLE = "网页出题暂时不可用，请稍后重试"
 # 学习结论只要一两句话
 INSIGHT_MAX_TOKENS = 400
 
@@ -224,4 +228,39 @@ def require_kb_quiz_service(
         vector_store=kb.vector_store,
         planner=planner,
         searcher=getattr(request.app.state, "web_searcher", None),
+    )
+
+
+# ---------- 网页出题 ----------
+
+
+@lru_cache
+def get_web_scope_judge() -> LangChainWebScopeJudge:
+    """范围判断：低温度、小 max_tokens，进程级单例。"""
+    s = get_settings()
+    return LangChainWebScopeJudge(
+        create_chat_model(temperature=s.agent_temperature, max_tokens=s.web_scope_max_tokens, settings=s)
+    )
+
+
+@lru_cache
+def get_web_quiz_generator() -> LangChainWebQuizGenerator:
+    """与文本出题相同的模型参数，进程级单例。"""
+    s = get_settings()
+    llm = create_chat_model(temperature=s.quiz_temperature, max_tokens=s.quiz_max_tokens, settings=s)
+    return LangChainWebQuizGenerator(llm)
+
+
+def require_web_quiz_service(
+    request: Request,
+    judge: WebScopeJudge = Depends(get_web_scope_judge),
+    generator: WebQuizGenerator = Depends(get_web_quiz_generator),
+    content_filter: ContentFilter = Depends(get_content_filter),
+) -> WebQuizService:
+    """网页抓取关闭（WEB_FETCH_ENABLED=false）时网页接口一律 5000 / 503。"""
+    reader = getattr(request.app.state, "page_reader", None)
+    if reader is None:
+        raise BizError(ErrorCode.INTERNAL_ERROR, MSG_WEB_UNAVAILABLE, http_status=503)
+    return WebQuizService(
+        reader, judge, generator, settings=request.app.state.settings, content_filter=content_filter
     )

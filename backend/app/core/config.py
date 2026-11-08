@@ -93,6 +93,26 @@ class Settings(BaseSettings):
     agent_web_query_max_chars: int = 100
     agent_kb_query_max_chars: int = 200
 
+    # 网页出题：本地抓取网页正文（SSRF 防护），读不出正文时用 Tavily Extract 兜底（需要 TAVILY_API_KEY）
+    web_fetch_enabled: bool = True
+    web_fetch_timeout_seconds: float = 10.0
+    # 网页解压后的字节上限，超过判为“网页太大”。公众号文章解压后约 4 MB（内联了大量脚本和样式）
+    web_fetch_max_bytes: int = 10 * 1024 * 1024
+    web_fetch_max_redirects: int = 3
+    # 同时抓取的网页数
+    web_fetch_concurrency: int = 4
+    # 提取出的正文超过这个字数直接截掉；少于 web_page_min_chars 判为“读不出正文”
+    web_page_max_chars: int = 60000
+    web_page_min_chars: int = 200
+    # 预览和出题共用一次抓取结果的缓存时长（秒）
+    web_page_cache_seconds: int = 600
+    web_extract_tavily_fallback: bool = True
+    # 交给出题模型的网页材料总长度上限（字符）
+    web_material_max_chars: int = 6000
+    # 出题前 AI 判断主题与范围：超时 / 失败时按原文顺序取材，照常出题
+    web_scope_timeout_seconds: float = 20.0
+    web_scope_max_tokens: int = 1000
+
     # wx.request 不受 CORS 限制，但 wx.loadFontFace 加载字体要求 CORS，小程序来源是 servicewechat.com；
     # localhost:10086 是 H5 本地调试地址
     cors_origins: list[str] = ["https://servicewechat.com", "http://localhost:10086"]

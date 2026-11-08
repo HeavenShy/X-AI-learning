@@ -16,6 +16,7 @@ from app.rag.embedding import SiliconFlowEmbedder
 from app.rag.vector_store import ChromaVectorStore
 from app.repositories import kb_repository
 from app.services.kb_ingest import KbIngestor
+from app.services.web_page import LocalPageFetcher, PageReader, TavilyExtractor
 from app.services.web_search import TavilySearcher
 from app.utils.content_filter import get_content_filter
 from app.services.wechat_auth import MockWeChatAuth, WeChatAuth
@@ -125,6 +126,18 @@ async def lifespan(app: FastAPI):
         app.state.web_searcher = None
         logger.info("未配置 TAVILY_API_KEY，出题不联网检索")
 
+    # 网页出题的抓取器（测试可预先在 app.state 放假实现）
+    web_owned = False
+    if app.state.page_reader is None and settings.web_fetch_enabled:
+        use_tavily = settings.web_search_enabled and settings.web_extract_tavily_fallback
+        app.state.page_reader = PageReader(
+            settings,
+            fetcher=LocalPageFetcher(settings),
+            extractor=TavilyExtractor(settings) if use_tavily else None,
+        )
+        web_owned = True
+        logger.info("网页出题已开启（本地抓取%s）", "，Tavily Extract 兜底" if use_tavily else "")
+
     if app.state.db is not None:
         await _recover_documents(app.state.db)
     _clear_upload_dir(Path(settings.kb_upload_dir))
@@ -133,6 +146,9 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         await _close_kb(app, kb_owned)
+        if web_owned:
+            await app.state.page_reader.aclose()
+            app.state.page_reader = None
         if app.state.web_searcher is not None:
             await app.state.web_searcher.aclose()
         await app.state.wechat.aclose()
@@ -148,6 +164,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.db = None
     app.state.wechat = None
     app.state.web_searcher = None
+    app.state.page_reader = None
     # 知识库组件：lifespan 里创建；测试可在启动前放入假实现（embedder / vector_store / content_filter）
     app.state.embedder = None
     app.state.vector_store = None

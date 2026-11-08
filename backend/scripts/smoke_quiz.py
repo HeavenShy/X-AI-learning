@@ -19,6 +19,11 @@
     python -m scripts.smoke_quiz --agent --kb data/smoke/员工手册.pdf
 对一组固定主题（常识 / 较新的产品版本 / 与资料相关的主题各 3 个）首页出题，打印每次 Agent 调用了哪些工具、
 轮数、规划耗时、总耗时、出处数；再关掉 Agent 用固定规则跑同一组主题，对比总耗时。--kb-topic 可替换资料相关主题。
+
+网页出题模式（需要 DEEPSEEK_API_KEY；Tavily 兜底需要 TAVILY_API_KEY）：
+    python -m scripts.smoke_quiz --url https://... --url https://... [-n 2] [--focus "..."] [--show]   # -n 默认每个网址 1 次
+每个网址：真抓取（本地优先、Tavily 兜底）→ AI 判断范围 → 真模型出题，打印抓取方式、字数、范围判断结果和知识点、
+各步耗时、尝试次数、摘录能在网页正文里找到的比例；抓取或判断失败时打印错误码和提示语。题目不落库。
 """
 
 import argparse
@@ -473,6 +478,97 @@ async def main_agent(*, kb_path: str | None, kb_topics: list[str], chroma_path: 
             await smoke.close()
 
 
+class _TimedJudge:
+    """记录范围判断的结果和耗时。"""
+
+    def __init__(self, inner):
+        self.inner = inner
+        self.last = None
+        self.seconds = 0.0
+
+    async def judge(self, **kw):
+        start = time.perf_counter()
+        self.last = None
+        try:
+            self.last = await self.inner.judge(**kw)
+            return self.last
+        finally:
+            self.seconds = time.perf_counter() - start
+
+
+class _CountingGenerator:
+    def __init__(self, inner):
+        self.inner = inner
+        self.calls = 0
+
+    async def generate(self, **kw):
+        self.calls += 1
+        return await self.inner.generate(**kw)
+
+
+async def main_web(urls: list[str], n: int, *, focus: str, show: bool = False) -> int:
+    from app.api.deps import get_web_quiz_generator, get_web_scope_judge
+    from app.models.web import WebQuizRequest
+    from app.services.web_page import LocalPageFetcher, PageReader, TavilyExtractor
+    from app.services.web_quiz_service import WebQuizService
+
+    settings = get_settings()
+    setup_logging("WARNING")
+    use_tavily = settings.web_search_enabled and settings.web_extract_tavily_fallback
+    reader = PageReader(
+        settings, fetcher=LocalPageFetcher(settings), extractor=TavilyExtractor(settings) if use_tavily else None
+    )
+    judge = _TimedJudge(get_web_scope_judge())
+    gen = _CountingGenerator(get_web_quiz_generator())
+    service = WebQuizService(reader, judge, gen, settings=settings, content_filter=get_content_filter())
+    print(f"Tavily 兜底：{'开' if use_tavily else '关'}；每个网址出 {n} 次 5 题{f'，重点：{focus}' if focus else ''}")
+    failures = 0
+    try:
+        for url in urls:
+            print(f"\n== {url}")
+            start = time.perf_counter()
+            try:
+                preview = await service.preview(url)
+            except BizError as exc:
+                print(f"  预览失败 {exc.code}：{exc.message}（{time.perf_counter() - start:.1f}s）")
+                continue
+            page = await reader.read(url)
+            print(
+                f"  预览 {time.perf_counter() - start:.1f}s via={preview.via} 站点={preview.site} "
+                f"标题《{preview.title}》 {preview.char_count} 字"
+            )
+            for i in range(1, n + 1):
+                gen.calls = 0
+                start = time.perf_counter()
+                try:
+                    quiz = await service.generate(WebQuizRequest(url=url, focus=focus, question_count=5))
+                except BizError as exc:
+                    print(f"  第 {i} 次 失败 {exc.code}：{exc.message}（{time.perf_counter() - start:.1f}s）")
+                    failures += exc.code == 4001
+                    continue
+                total = time.perf_counter() - start
+                scope = judge.last
+                if scope is not None:
+                    print(f"  范围判断 {judge.seconds:.1f}s 主题「{scope.title}」/{scope.topic} 选块 {scope.block_ids}")
+                    print(f"  知识点：{'、'.join(scope.knowledge_points)}")
+                else:
+                    print(f"  范围判断 {judge.seconds:.1f}s 失败（已降级为按原文顺序取材）")
+                quotes = [s.quote for q in quiz.questions for s in q.sources]
+                found = sum(1 for qt in quotes if _squash(qt) in _squash(page.text))
+                print(
+                    f"  第 {i} 次 {total:.1f}s 尝试 {gen.calls} 次 《{quiz.title}》/{quiz.topic} "
+                    f"摘录在原文 {found}/{len(quotes)}"
+                )
+                if show:
+                    for q in quiz.questions:
+                        print(f"    [{q.type}] {q.stem}  答案 {q.answer}  ({q.knowledge_point})")
+                        for src in q.sources[:1]:
+                            print(f"        摘录：{src.quote[:60]}")
+    finally:
+        await reader.aclose()
+    return 1 if failures else 0
+
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
@@ -481,11 +577,14 @@ if __name__ == "__main__":
     parser.add_argument("--topic", help="只用这一个学习内容出题（5 题）")
     parser.add_argument("--show", action="store_true", help="打印每套题的题干、选项和答案")
     parser.add_argument("--kb", metavar="FILE", help="知识库模式：用这份本地资料（pdf / docx / txt / md）出题")
-    parser.add_argument("--focus", default="", help="知识库模式：另外用这个重点再出 n 次")
+    parser.add_argument("--focus", default="", help="知识库模式：另外用这个重点再出 n 次；网页模式：出题重点")
+    parser.add_argument("--url", action="append", help="网页出题模式：用这个网址出题（可重复）")
     parser.add_argument("--chroma", default="data/chroma_smoke", help="知识库模式：冒烟用的 Chroma 目录")
     parser.add_argument("--agent", action="store_true", help="检索规划 Agent 模式：固定主题集，统计工具选择与耗时")
     parser.add_argument("--kb-topic", action="append", help="Agent 模式：与 --kb 资料相关的主题（可重复，替换默认 3 个）")
     args = parser.parse_args()
+    if args.url:
+        sys.exit(asyncio.run(main_web(args.url, max(1, args.n if args.n != 10 else 1), focus=args.focus, show=args.show)))
     if args.agent:
         sys.exit(
             asyncio.run(
