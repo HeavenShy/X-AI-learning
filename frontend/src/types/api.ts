@@ -19,8 +19,10 @@ export interface QuestionSource {
   page: number | null
   /** 不超过 120 字的原文摘录 */
   quote: string
-  /** 网页出题的网页地址；知识库出题为 null（旧数据没有） */
+  /** 网页地址 / B 站视频链接；知识库出题和上传的视频为 null（旧数据没有） */
   url?: string | null
+  /** 视频出题：出处在视频里的起始秒数；其他来源为 null（旧数据没有） */
+  start_seconds?: number | null
 }
 
 export interface Question {
@@ -36,7 +38,7 @@ export interface Question {
   sources?: QuestionSource[]
 }
 
-export type SourceType = 'text' | 'knowledge_base' | 'web'
+export type SourceType = 'text' | 'knowledge_base' | 'web' | 'video'
 
 export interface Quiz {
   quiz_id: string
@@ -122,6 +124,16 @@ export const ErrorCode = {
   PAGE_NO_CONTENT: 4032,
   /** 网页：不是网页（PDF、图片等）或太大 */
   PAGE_NOT_SUPPORTED: 4033,
+  /** 视频：文件类型不支持 */
+  VIDEO_TYPE_NOT_SUPPORTED: 4050,
+  /** 视频：超过 200 MB 或 30 分钟 */
+  VIDEO_TOO_LARGE: 4051,
+  /** 视频：不是 B 站链接 / B 站视频读不了 */
+  VIDEO_LINK_INVALID: 4052,
+  /** 视频：还没处理完、处理失败或已过期 */
+  VIDEO_NOT_READY: 4053,
+  /** 视频：所选时间段里没有讲话内容 */
+  VIDEO_RANGE_EMPTY: 4054,
   NOT_FOUND: 4040,
   INTERNAL_ERROR: 5000,
   /** 前端自定义：网络不通 / 超时 */
@@ -363,6 +375,37 @@ export interface WebPreview {
 export interface WebQuizRequest {
   url: string
   focus: string
+  question_count: QuestionCount
+  difficulty: DifficultyOption
+}
+
+// ---------- 视频出题 ----------
+
+export type VideoJobStatus = 'processing' | 'ready' | 'failed'
+export type VideoJobStage = 'download' | 'extract' | 'transcribe' | 'done'
+
+export interface VideoJob {
+  job_id: string
+  source: 'upload' | 'bilibili'
+  /** 上传为文件名，B 站为视频标题（取到信息前为“B 站视频”） */
+  title: string
+  url: string | null
+  status: VideoJobStatus
+  stage: VideoJobStage
+  progress_done: number
+  progress_total: number
+  duration_seconds: number
+  /** 文字稿来源：字幕 / 语音识别；还没开始转写为 null */
+  via: 'asr' | 'subtitle' | null
+  char_count: number
+  fail_reason: string | null
+}
+
+export interface VideoQuizRequest {
+  job_id: string
+  focus: string
+  start_seconds?: number
+  end_seconds?: number
   question_count: QuestionCount
   difficulty: DifficultyOption
 }

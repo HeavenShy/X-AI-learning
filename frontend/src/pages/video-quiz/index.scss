@@ -1,0 +1,440 @@
+/* 用视频出题（原型 02-input-and-library.html 第 4、5、6 屏） */
+.video-quiz {
+  .field {
+    display: block;
+    margin-top: 14px;
+  }
+  .field-t {
+    display: block;
+    font: 400 17px/1.2 var(--display);
+    margin-bottom: 6px;
+  }
+
+  /* 来源二选一 */
+  .vq-seg {
+    display: flex;
+    margin-top: 4px;
+  }
+  .vq-seg-btn {
+    flex: 1;
+    height: 42px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 16px/1 var(--display);
+  }
+  .vq-seg-btn + .vq-seg-btn {
+    margin-left: 8px;
+  }
+  .vq-seg-btn.is-on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .vq-pick {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    padding: 14px 12px;
+    background: var(--paper);
+    border: 2.5px dashed var(--ink);
+  }
+  .vq-pick-pressed {
+    background: var(--yellow-soft);
+  }
+  .vq-pick-i {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin-right: 12px;
+    border: 2px solid var(--ink);
+    background: var(--halftone), var(--yellow-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vq-pick-i .icon {
+    width: 22px;
+    height: 22px;
+  }
+  .vq-pick-t {
+    flex: 1;
+    min-width: 0;
+  }
+  .vq-pick-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* 链接 / 时间输入框 */
+  .vq-input {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    margin-top: 12px;
+    padding: 0 10px 0 12px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+  }
+  .vq-input.is-error {
+    border-color: var(--red);
+  }
+  .vq-input-i {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+  .vq-input-el {
+    flex: 1;
+    min-width: 0;
+    height: 42px;
+    font-size: 15px;
+    font-family: var(--body);
+    color: var(--ink);
+  }
+  /* H5 端 Taro 会把 Input 包一层，内层原生 input 不继承字体 */
+  .vq-input-el input {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 0;
+  }
+  .vq-placeholder {
+    color: #8a929b;
+  }
+  .vq-range {
+    display: flex;
+    align-items: center;
+  }
+  .vq-range-in {
+    flex: 1;
+    margin-top: 0;
+  }
+  .vq-range-to {
+    flex: none;
+    margin: 0 10px;
+    font-size: 14px;
+  }
+  .vq-range-tip {
+    margin-top: 6px;
+  }
+  .vq-clip {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 7px 10px;
+    background: var(--green-soft);
+    border: 2px solid var(--green);
+    font-size: 13px;
+  }
+  .vq-clip .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+
+  /* 卡片：预览 / 解析中 / 失败 */
+  .vq-card {
+    margin-top: 12px;
+    padding: 10px 12px 12px;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+  }
+  .vq-card.is-error {
+    border-color: var(--red);
+    background: var(--red-soft);
+  }
+  .vq-card-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .vq-card-t {
+    flex: 1;
+    min-width: 0;
+    margin-right: 8px;
+    font: 400 16px/1.3 var(--display);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vq-preview {
+    display: flex;
+  }
+  .vq-thumb {
+    flex: none;
+    width: 72px;
+    height: 56px;
+    margin-right: 10px;
+    border: 2px solid var(--ink);
+    background: var(--halftone), var(--yellow-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vq-thumb .icon {
+    width: 24px;
+    height: 24px;
+  }
+  .vq-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .vq-site {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .vq-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .vq-small {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .vq-fail-h {
+    display: block;
+    font: 400 17px/1.3 var(--display);
+    color: #b3201c;
+  }
+  .vq-fail-p {
+    display: block;
+    margin-top: 4px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .vq-fixes {
+    margin-top: 10px;
+  }
+  .vq-fix {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+  }
+  .vq-fix + .vq-fix {
+    margin-top: 8px;
+  }
+  .vq-fix-pressed {
+    background: var(--yellow-soft);
+  }
+  .vq-fix-t {
+    flex: 1;
+    min-width: 0;
+  }
+  .vq-fix-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .vq-chev {
+    flex: none;
+    font-size: 20px;
+    margin-left: 8px;
+  }
+
+  /* 解析步骤（同出题中页） */
+  .vq-steps {
+    margin-top: 10px;
+  }
+  .vq-step {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 12px;
+  }
+  .vq-step + .vq-step {
+    margin-top: 8px;
+  }
+  .vq-step .n {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border: 2.5px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 400 20px/1 var(--display);
+  }
+  .vq-step-t {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0 12px;
+    min-width: 0;
+  }
+  .vq-step-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .vq-step-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .vq-step .st {
+    font: 400 16px/1 var(--display);
+  }
+  .vq-step.done .n {
+    background: var(--green);
+    color: #fff;
+  }
+  .vq-step.done .st {
+    color: var(--green);
+  }
+  .vq-step.doing {
+    background: var(--halftone), var(--paper);
+  }
+  .vq-step.doing .n {
+    background: var(--yellow);
+  }
+  .vq-step.wait {
+    border-color: #a8aeb5;
+    color: #8a929b;
+  }
+  .vq-step.wait .n {
+    border-color: #a8aeb5;
+  }
+  .vq-step.wait .vq-step-sub {
+    color: #8a929b;
+  }
+  .vq-bar {
+    width: 100%;
+    margin-top: 12px;
+    height: 10px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    overflow: hidden;
+  }
+  .vq-bar-i {
+    height: 100%;
+    background: var(--yellow);
+    border-right: 2px solid var(--ink);
+  }
+  .vq-bar-run {
+    height: 100%;
+    width: 55%;
+    background: var(--yellow);
+    border-right: 2px solid var(--ink);
+    animation: vq-run 2.4s ease-in-out infinite alternate;
+  }
+  @keyframes vq-run {
+    from {
+      width: 30%;
+    }
+    to {
+      width: 80%;
+    }
+  }
+
+  /* 重点、题量（同网页出题页） */
+  .vq-focus {
+    background: var(--paper);
+    border: 2.5px solid var(--ink);
+    padding: 10px 12px 6px;
+  }
+  .vq-focus-el {
+    display: block;
+    width: 100%;
+    height: 60px;
+    font-size: 15px;
+    line-height: 1.6;
+    font-family: var(--body);
+    color: var(--ink);
+    background: transparent;
+  }
+  .vq-focus-el textarea {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    outline: none;
+    resize: none;
+    padding: 0;
+  }
+  .vq-count {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #8a929b;
+  }
+  .vq-len {
+    display: flex;
+  }
+  .vq-len-btn {
+    flex: 1;
+    height: 46px;
+    border: 2.5px solid var(--ink);
+    background: var(--paper);
+    font-size: 12.5px;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .vq-len-btn + .vq-len-btn {
+    margin-left: 8px;
+  }
+  .vq-len-btn.is-on {
+    background: var(--ink);
+    color: #fff;
+  }
+  .vq-len-n {
+    display: block;
+    font: 400 17px/1.1 var(--display);
+  }
+  .vq-err {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--red);
+    line-height: 1.5;
+  }
+  .vq-err .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 1px 6px 0 0;
+  }
+  .vq-tip {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+  .vq-switch {
+    display: block;
+    margin-top: 14px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--blue);
+    text-decoration: underline;
+  }
+  .vq-pad {
+    height: 16px;
+  }
+}

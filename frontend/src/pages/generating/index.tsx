@@ -5,6 +5,8 @@
  * 资料未就绪（4023）或重点不合规（4003）时回到出题设置页提示。
  * 网页出题（genRequest.web）调网页出题接口，步骤是“读取网页 / 判断主题与范围 / 出题并写讲解”；
  * 网页打不开、读不出正文、AI 判断没有可学内容（4030–4033）或不合规（4003）时回到网页出题页提示。
+ * 视频出题（genRequest.video）调视频出题接口，步骤是“读取文字稿 / 判断主题与范围 / 出题并写讲解”；
+ * 解析结果过期（4040 / 4053）、时间段里没讲话（4054）、没有可学内容（4032）或不合规（4003）时回到视频出题页提示。
  */
 
 import { Text, View } from '@tarojs/components'
@@ -13,8 +15,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import NavBar, { goBackOrHome } from '../../components/NavBar'
 import { Btn, SafeBottom } from '../../components/ui'
-import { displayTopic, planText } from '../../core/format'
-import { generateKbQuiz, generateQuiz, generateWebQuiz } from '../../services/api'
+import { displayTopic, formatClock, planText } from '../../core/format'
+import { generateKbQuiz, generateQuiz, generateVideoQuiz, generateWebQuiz } from '../../services/api'
 import { ApiError, type Pending } from '../../services/request'
 import { useStore } from '../../store'
 import { ErrorCode, type Quiz } from '../../types/api'
@@ -29,6 +31,13 @@ const WEB_ERRORS: number[] = [
   ErrorCode.PAGE_UNREACHABLE,
   ErrorCode.PAGE_NO_CONTENT,
   ErrorCode.PAGE_NOT_SUPPORTED,
+  ErrorCode.CONTENT_NOT_ALLOWED
+]
+const VIDEO_ERRORS: number[] = [
+  ErrorCode.NOT_FOUND,
+  ErrorCode.VIDEO_NOT_READY,
+  ErrorCode.VIDEO_RANGE_EMPTY,
+  ErrorCode.PAGE_NO_CONTENT,
   ErrorCode.CONTENT_NOT_ALLOWED
 ]
 
@@ -61,11 +70,20 @@ export default function Generating() {
     }
     setPhase('running')
     setStep(0)
-    const expected = (EXPECTED_MS[req.count] ?? 7000) + (req.web ? WEB_EXTRA_MS : 0)
+    const expected = (EXPECTED_MS[req.count] ?? 7000) + (req.web || req.video ? WEB_EXTRA_MS : 0)
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 1)), 1200))
     timers.current.push(setTimeout(() => setStep((s) => Math.max(s, 2)), Math.max(2400, expected * 0.45)))
 
-    const p = req.web
+    const p = req.video
+      ? generateVideoQuiz({
+          job_id: req.video.jobId,
+          focus: req.text,
+          start_seconds: req.video.startSeconds,
+          end_seconds: req.video.endSeconds,
+          question_count: req.count,
+          difficulty: req.difficulty
+        })
+      : req.web
       ? generateWebQuiz({ url: req.web.url, focus: req.text, question_count: req.count, difficulty: req.difficulty })
       : req.kb
         ? generateKbQuiz(req.kb.kbId, {
@@ -87,6 +105,11 @@ export default function Generating() {
         clearTimers()
         if (err.code === ErrorCode.ABORTED) return
         // 网页：打不开 / 读不出正文 / 没有可学内容 / 不合规，回到网页出题页提示原因和替代方式
+        if (req.video && VIDEO_ERRORS.includes(err.code)) {
+          useStore.getState().setVideoError({ code: err.code, message: err.message })
+          goBackOrHome()
+          return
+        }
         if (req.web && WEB_ERRORS.includes(err.code)) {
           useStore.getState().setWebError({ code: err.code, message: err.message })
           goBackOrHome()
@@ -130,7 +153,17 @@ export default function Generating() {
 
   const stepState = (i: number): StepState => (step > i ? 'done' : step === i ? 'doing' : 'wait')
   const focus = displayTopic(req.text)
-  const steps = req.web
+  const range =
+    req.video && (req.video.startSeconds !== undefined || req.video.endSeconds !== undefined)
+      ? `${formatClock(req.video.startSeconds ?? 0)}–${req.video.endSeconds !== undefined ? formatClock(req.video.endSeconds) : '结尾'}`
+      : ''
+  const steps = req.video
+    ? [
+        { title: '读取文字稿', sub: range ? `只看 ${range}` : `《${req.video.title.slice(0, 14)}》` },
+        { title: '判断主题与范围', sub: focus ? `围绕：${focus.slice(0, 14)}` : '挑出核心片段和知识点' },
+        { title: '出题并写讲解', sub: `${planText(req.count)}，标出时间点` }
+      ]
+    : req.web
     ? [
         { title: '读取网页', sub: `《${req.web.title.slice(0, 14)}》` },
         { title: '判断主题与范围', sub: focus ? `围绕：${focus.slice(0, 14)}` : '挑出核心段落和知识点' },
@@ -154,7 +187,13 @@ export default function Generating() {
       <NavBar variant='title' title='出题中' left={phase === 'failed' ? 'back' : 'none'} />
       <View className='content'>
         <View className='gen-quote'>
-          {req.web ? (
+          {req.video ? (
+            <>
+              用视频出题：<Text className='gen-quote-b'>{req.video.title}</Text>
+              {range ? `（${range}）` : ''}
+              {focus ? `，重点：${focus}` : ''}
+            </>
+          ) : req.web ? (
             <>
               用网页出题：<Text className='gen-quote-b'>{req.web.title}</Text>
               {focus ? `，重点：${focus}` : ''}
@@ -214,7 +253,7 @@ export default function Generating() {
             <View className='fail-foot'>
               <Btn onClick={() => setAttempt((a) => a + 1)}>重新出题</Btn>
               <Btn kind='ghost' className='mt14' onClick={() => goBackOrHome()}>
-                {req.kb || req.web ? '改一下设置' : '改一下内容'}
+                {req.kb || req.web || req.video ? '改一下设置' : '改一下内容'}
               </Btn>
             </View>
           </>

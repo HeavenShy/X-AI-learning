@@ -31,6 +31,11 @@ export const ICON_SVGS = {
     '0 0 16 16',
     '<path d="M6.5 9.5l3-3 M7 4.5l1.5-1.5a2.5 2.5 0 013.5 3.5L10.5 8 M9 11.5L7.5 13a2.5 2.5 0 01-3.5-3.5L5.5 8" fill="none" stroke="#000" stroke-width="1.6"/>'
   ),
+  // 可用的“贴视频”入口与视频出题页用黑色
+  videoInk: svg(
+    '0 0 16 16',
+    '<rect x="1.5" y="3" width="13" height="10" rx="2" fill="none" stroke="#000" stroke-width="1.6"/><path d="M6.5 6v4l3.5-2z" fill="#000"/>'
+  ),
   video: svg(
     '0 0 16 16',
     `<rect x="1.5" y="3" width="13" height="10" rx="2" fill="none" stroke="${GREY}" stroke-width="1.6"/><path d="M6.5 6v4l3.5-2z" fill="${GREY}"/>`

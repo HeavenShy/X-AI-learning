@@ -19,6 +19,8 @@ import type {
   ReviewAnswerResult,
   StatsInsight,
   StatsRange,
+  VideoJob,
+  VideoQuizRequest,
   WebPreview,
   WebQuizRequest
 } from '../types/api'
@@ -93,3 +95,19 @@ export const previewWebPage = (url: string) => authed<WebPreview>('POST', '/api/
 
 /** AI 判断主题与范围后只依据网页出题，每题带原文摘录；抓取 + 范围判断 + 最多 3 次重试 */
 export const generateWebQuiz = (req: WebQuizRequest) => authed<Quiz>('POST', '/api/v1/web/quiz', req, 120_000)
+
+// ---------- 视频出题（都要求登录；后端没配转写 Key 时返回 5000） ----------
+
+/** 上传视频（≤200 MB）：立即返回处理中的任务，抽音轨、转文字在后台进行。大文件走慢网要给足时间 */
+export const uploadVideo = (filePath: string, name: string, onProgress?: (percent: number) => void) =>
+  authedUpload<VideoJob>('/api/v1/video/uploads', filePath, 600_000, { formData: { name }, onProgress })
+
+/** B 站链接（或分享文案、BV 号）：立即返回处理中的任务 */
+export const submitVideoLink = (url: string) => authed<VideoJob>('POST', '/api/v1/video/links', { url }, 30_000)
+
+/** 解析任务状态（每 2 秒轮询一次） */
+export const getVideoJob = (jobId: string) =>
+  authed<VideoJob>('GET', `/api/v1/video/jobs/${encodeURIComponent(jobId)}`, undefined, 15_000)
+
+/** 依据转好的文字稿出题，出处带时间点；范围判断 + 最多 3 次重试 */
+export const generateVideoQuiz = (req: VideoQuizRequest) => authed<Quiz>('POST', '/api/v1/video/quiz', req, 120_000)

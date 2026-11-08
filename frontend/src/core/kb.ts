@@ -4,6 +4,7 @@
  */
 
 import type { DocumentStatus, KbDocument, KnowledgeBase, QuestionSource } from '../types/api'
+import { formatClock } from './format'
 
 export const KB_EXTENSIONS = ['pdf', 'docx', 'txt', 'md'] as const
 export const KB_MAX_FILE_BYTES = 20 * 1024 * 1024
@@ -63,8 +64,9 @@ export function documentSubline(doc: KbDocument): string {
   return parts.join('，')
 }
 
-/** 讲解里的出处行：出处：文件名，第 N 页（没有页码只显示文件名）；网页出题为“出处：网页《标题》” */
+/** 讲解里的出处行：出处：文件名，第 N 页（没有页码只显示文件名）；网页为“出处：网页《标题》”；视频为“出处：视频《名》02:10” */
 export function formatSource(src: QuestionSource): string {
+  if (src.start_seconds != null) return `出处：视频《${src.document_name}》${formatClock(src.start_seconds)}`
   if (src.url) return `出处：网页《${src.document_name}》`
   return src.page != null ? `出处：${src.document_name}，第 ${src.page} 页` : `出处：${src.document_name}`
 }

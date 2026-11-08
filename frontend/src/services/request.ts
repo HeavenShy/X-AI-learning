@@ -99,10 +99,14 @@ export interface UploadOptions {
   name: string
   timeout: number
   token?: string | null
+  /** 额外的表单字段 */
+  formData?: Record<string, string>
+  /** 上传进度（0–100） */
+  onProgress?: (percent: number) => void
 }
 
 /** 上传一个文件（multipart）。小程序上传只能走 uploadFile，不能用 request；返回的 data 是字符串，需要自己解析 */
-export function upload<T>({ path, filePath, name, timeout, token }: UploadOptions): Pending<T> {
+export function upload<T>({ path, filePath, name, timeout, token, formData, onProgress }: UploadOptions): Pending<T> {
   let task: Taro.UploadTask | null = null
   let aborted = false
   const header: Record<string, string> = {}
@@ -114,6 +118,7 @@ export function upload<T>({ path, filePath, name, timeout, token }: UploadOption
       name,
       header,
       timeout,
+      ...(formData ? { formData } : {}),
       success: (res) => {
         let body: unknown = res.data
         if (typeof body === 'string') {
@@ -135,6 +140,9 @@ export function upload<T>({ path, filePath, name, timeout, token }: UploadOption
         else reject(new ApiError(ErrorCode.NETWORK, '网络好像断了，没传上去'))
       }
     }) as unknown as Taro.UploadTask
+    if (onProgress && task && typeof task.onProgressUpdate === 'function') {
+      task.onProgressUpdate((res) => onProgress(res.progress))
+    }
   })
   return {
     promise,

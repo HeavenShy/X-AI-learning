@@ -62,3 +62,12 @@ export function displayTopic(input: string): string {
   if (prefix) t = t.slice(prefix.length)
   return t.replace(/[。.!！?？\s]+$/u, '')
 }
+
+/** 秒 → mm:ss（满 1 小时为 h:mm:ss），视频时间点用 */
+export function formatClock(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
+}

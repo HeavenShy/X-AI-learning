@@ -48,13 +48,22 @@ export interface WebGenRequest {
   site: string
 }
 
+/** 用视频出题：解析完成的任务，以及选填的时间段（秒） */
+export interface VideoGenRequest {
+  jobId: string
+  title: string
+  startSeconds?: number
+  endSeconds?: number
+}
+
 export interface GenRequest {
-  /** 文本出题：学习内容；知识库 / 网页出题：想重点学什么（可为空） */
+  /** 文本出题：学习内容；知识库 / 网页 / 视频出题：想重点学什么（可为空） */
   text: string
   count: QuestionCount
   difficulty: DifficultyOption
   kb?: KbGenRequest
   web?: WebGenRequest
+  video?: VideoGenRequest
 }
 
 export interface ReportState {
@@ -79,6 +88,8 @@ interface State {
   kbError: string | null
   /** 网页出题失败（打不开 / 读不出正文 / 不合规等）带回网页出题页的提示，code 决定给哪些替代方式 */
   webError: { code: number; message: string } | null
+  /** 视频出题失败（解析结果过期 / 时间段里没讲话 / 没有可学内容等）带回视频出题页的提示 */
+  videoError: { code: number; message: string } | null
   report: ReportState | null
   /** 复习页点开、正在重做的错题（不持久化：被系统回收后重做页回到复习页） */
   reviewing: MistakeItem | null
@@ -89,6 +100,7 @@ interface State {
   setHomeError: (msg: string | null) => void
   setKbError: (msg: string | null) => void
   setWebError: (err: { code: number; message: string } | null) => void
+  setVideoError: (err: { code: number; message: string } | null) => void
   requestGenerate: (req: GenRequest) => void
   setPendingQuiz: (q: Quiz | null) => void
   startSession: () => void
@@ -134,6 +146,7 @@ export const useStore = create<State>((set, get) => ({
   homeError: null,
   kbError: null,
   webError: null,
+  videoError: null,
   report: null,
   reviewing: null,
   reviewMastered: null,
@@ -142,8 +155,9 @@ export const useStore = create<State>((set, get) => ({
   setHomeError: (homeError) => set({ homeError }),
   setKbError: (kbError) => set({ kbError }),
   setWebError: (webError) => set({ webError }),
+  setVideoError: (videoError) => set({ videoError }),
   requestGenerate: (genRequest) =>
-    set({ genRequest, pendingQuiz: null, homeError: null, kbError: null, webError: null }),
+    set({ genRequest, pendingQuiz: null, homeError: null, kbError: null, webError: null, videoError: null }),
   setPendingQuiz: (pendingQuiz) => set({ pendingQuiz }),
 
   startSession: () => {

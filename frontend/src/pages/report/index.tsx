@@ -14,6 +14,7 @@ import { Btn, SafeBottom } from '../../components/ui'
 import { formatDuration } from '../../core/format'
 import { WEAK_BELOW } from '../../core/mastery'
 import { sessionStats } from '../../core/session'
+import { videoQuizPage, videoUrlOf } from '../../core/video'
 import { webQuizPage, webUrlOf } from '../../core/web'
 import { generateReport, getQuizDetail } from '../../services/api'
 import { ensureReport } from '../../services/report-flow'
@@ -44,6 +45,9 @@ interface ReportView {
   fromKb: boolean
   /** 网页出的题：“再来一话”回到网页出题页并带上这个链接 */
   webUrl: string | null
+  /** 视频出的题：“再来一话”回到视频出题页（B 站视频带上链接） */
+  fromVideo: boolean
+  videoUrl: string | null
 }
 
 /** 本次闯关 */
@@ -80,7 +84,9 @@ function useCurrentView(enabled: boolean): ReportView | null {
       difficulty: session.difficulty
     },
     fromKb: session.quiz.source_type === 'knowledge_base',
-    webUrl: webUrlOf(session.quiz)
+    webUrl: webUrlOf(session.quiz),
+    fromVideo: session.quiz.source_type === 'video',
+    videoUrl: videoUrlOf(session.quiz)
   }
 }
 
@@ -133,7 +139,9 @@ function useHistoryView(quizId: string | undefined) {
       data: state.reportStatus === 'done' ? d.report : null,
       again: { text: d.quiz.user_input, count: d.quiz.questions.length as QuestionCount, difficulty: d.difficulty },
       fromKb: d.quiz.source_type === 'knowledge_base',
-      webUrl: webUrlOf(d.quiz)
+      webUrl: webUrlOf(d.quiz),
+      fromVideo: d.quiz.source_type === 'video',
+      videoUrl: videoUrlOf(d.quiz)
     }
   }
   return { state, view, loadDetail, retry: () => state.phase === 'ready' && retryReport(state.detail) }
@@ -185,6 +193,11 @@ export default function ReportPage() {
     // 知识库出的题没记下用的是哪个库：回到“我的知识库”重新选
     if (view.fromKb) {
       Taro.reLaunch({ url: '/pages/kb-list/index' })
+      return
+    }
+    // 视频出的题：回到视频出题页（解析结果只保留 2 小时：B 站视频预填链接重新解析，上传的视频要重新选）
+    if (view.fromVideo) {
+      Taro.reLaunch({ url: videoQuizPage(view.videoUrl) })
       return
     }
     // 网页出的题：回到网页出题页，链接预填好，可以改重点和题量
