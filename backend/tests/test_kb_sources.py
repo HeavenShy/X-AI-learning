@@ -30,7 +30,7 @@ def test_valid_source_maps_to_document_and_page():
     content = attach(source_ids=[2], quote="5000 元以下由部门经理审批。")
     src = content.questions[0].sources
     assert [s.model_dump() for s in src] == [
-        {"document_id": "doc_a", "document_name": "员工手册.pdf", "page": 4, "quote": "5000 元以下由部门经理审批。"}
+        {"document_id": "doc_a", "document_name": "员工手册.pdf", "page": 4, "quote": "5000 元以下由部门经理审批。", "url": None, "start_seconds": None}
     ]
     # 题目其余字段不变
     assert content.questions[0].stem.startswith("第 1 题")

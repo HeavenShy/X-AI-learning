@@ -14,7 +14,7 @@
 import logging
 import random
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from app.core.config import Settings
 from app.core.db import Database
@@ -104,6 +104,7 @@ def fit_materials(
                 document_name=names.get(r["document_id"], ""),
                 page=r["page"],
                 text=r["text"],
+                label=r.get("label"),
             )
             for i, r in enumerate(ordered, start=1)
         ]
@@ -252,8 +253,12 @@ def attach_sources(
     pieces: Sequence[MaterialPiece],
     *,
     required: bool = True,
+    source_extra: Callable[[MaterialPiece, str], dict] | None = None,
 ) -> QuizContent:
-    """把模型标的出处编号对回本次材料，生成每题的 sources。content 与 generated 按题序一一对应。"""
+    """把模型标的出处编号对回本次材料，生成每题的 sources。content 与 generated 按题序一一对应。
+
+    source_extra：按片段和最终摘录给出处补字段（网页的 url；视频的 url，以及摘录所在那一段的 start_seconds）。
+    """
     if len(content.questions) != len(generated):
         raise QuizValidationError("question count mismatch when attaching sources")
     by_number = {p.number: p for p in pieces}
@@ -262,14 +267,18 @@ def attach_sources(
         numbers = list(dict.fromkeys(n for n in g.source_ids if n in by_number))[:MAX_SOURCES]
         if not numbers and required:
             raise QuizValidationError(f"{q.id}: no valid source ids in {g.source_ids}")
-        sources = [
-            QuestionSource(
-                document_id=by_number[n].document_id,
-                document_name=by_number[n].document_name,
-                page=by_number[n].page,
-                quote=_quote_for(by_number[n], g.source_quote),
+        sources = []
+        for n in numbers:
+            piece = by_number[n]
+            quote = _quote_for(piece, g.source_quote)
+            sources.append(
+                QuestionSource(
+                    document_id=piece.document_id,
+                    document_name=piece.document_name,
+                    page=piece.page,
+                    quote=quote,
+                    **(source_extra(piece, quote) if source_extra else {}),
+                )
             )
-            for n in numbers
-        ]
         questions.append(q.model_copy(update={"sources": sources}))
     return content.model_copy(update={"questions": questions})

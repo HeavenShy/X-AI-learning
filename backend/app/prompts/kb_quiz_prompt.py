@@ -34,6 +34,8 @@ class MaterialPiece:
     document_name: str
     page: int | None
     text: str
+    # 视频出题的时间段（如 02:10–03:05），显示在文件名后面代替页码；其他来源为 None
+    label: str | None = None
 
 
 def strip_tags(text: str) -> str:
@@ -43,7 +45,10 @@ def strip_tags(text: str) -> str:
 
 def format_material(piece: MaterialPiece) -> str:
     name = strip_tags(piece.document_name).replace("\n", " ")
-    where = f"《{name}》第 {piece.page} 页" if piece.page is not None else f"《{name}》"
+    if piece.label:
+        where = f"《{name}》{piece.label}"
+    else:
+        where = f"《{name}》第 {piece.page} 页" if piece.page is not None else f"《{name}》"
     return f"[{piece.number}] {where}\n{strip_tags(piece.text)}"
 
 

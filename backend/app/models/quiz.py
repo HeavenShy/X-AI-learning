@@ -6,7 +6,7 @@ QuestionType = Literal["single", "multiple", "judge"]
 Difficulty = Literal["easy", "medium", "hard"]
 DifficultyOption = Literal["mixed", "easy", "medium", "hard"]
 QuestionCount = Literal[3, 5, 10]
-SourceType = Literal["text", "knowledge_base"]
+SourceType = Literal["text", "knowledge_base", "web", "video"]
 
 
 class Option(BaseModel):
@@ -15,14 +15,19 @@ class Option(BaseModel):
 
 
 class QuestionSource(BaseModel):
-    """知识库出题的出处快照：资料删除后仍随题目保留。"""
+    """知识库 / 网页 / 视频出题的出处快照：资料删除后仍随题目保留。"""
 
     document_id: str
+    # 知识库为文件名，网页为网页标题，视频为视频名
     document_name: str
-    # PDF 有页码，Word / TXT / Markdown 为 null
+    # PDF 有页码，Word / TXT / Markdown / 网页为 null
     page: int | None = None
     # 不超过 120 字的原文摘录
     quote: str
+    # 网页出题的网页地址、B 站视频的链接；知识库出题和上传的视频为 null（旧的 questions_json 没有该字段，还原时也为 null）
+    url: str | None = None
+    # 视频出题：出处在视频里的起始秒数；其他来源为 null
+    start_seconds: int | None = None
 
 
 class Question(BaseModel):
