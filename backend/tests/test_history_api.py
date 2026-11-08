@@ -166,7 +166,8 @@ def test_detail_with_sources_is_knowledge_base(api, sql):
     rewrite_questions(sql, quiz["quiz_id"], lambda q: q.update(sources=[SOURCE]))
     data = api.get(f"/user/quizzes/{quiz['quiz_id']}", token).json()["data"]
     assert data["quiz"]["source_type"] == "knowledge_base"
-    assert data["quiz"]["questions"][0]["sources"] == [SOURCE]
+    # 旧数据没有 url / start_seconds 字段，还原后为 null
+    assert data["quiz"]["questions"][0]["sources"] == [{**SOURCE, "url": None, "start_seconds": None}]
 
 
 def test_detail_restores_old_questions_without_sources(api, sql):

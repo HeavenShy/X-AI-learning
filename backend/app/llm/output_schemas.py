@@ -90,3 +90,22 @@ class GeneratedInsight(BaseModel):
     insight: str = Field(
         description="一到两句话、不超过 60 字：先点出这段时间最容易错的地方（引用给出的数字），再给一个下次马上能做的具体做法"
     )
+
+
+class WebPageScope(BaseModel):
+    """提交对这篇网页的出题范围判断：主题、要考的知识点、用哪些正文块。"""
+
+    learnable: bool = Field(
+        description="网页里有没有可以学习、可以出题的知识内容。登录页、商品列表、导航页、纯广告、几乎没有正文时填 false"
+    )
+    reason: str = Field(default="", description="learnable 为 false 时，用一句话（不超过 30 字）说明原因；否则留空串")
+    title: str = Field(default="", description="这篇网页讲的主题，2–12 个字，例如“RAG 入门”")
+    topic: str = Field(default="", description=TOPIC_DESCRIPTION)
+    knowledge_points: list[str] = Field(
+        default_factory=list,
+        description="出题范围：这篇网页里最值得考的 3–8 个知识点，每个 4–16 个字，按重要性排序，互不重复",
+    )
+    block_ids: list[int] = Field(
+        default_factory=list,
+        description="承载这些知识点的正文块编号（块开头方括号里的数字），按重要性排序；不要选导航、广告、评论、作者简介、推广和版权声明",
+    )

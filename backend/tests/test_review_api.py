@@ -207,7 +207,8 @@ def test_mistakes_carry_question_sources(api, sql):
     quiz = finish(api, token)
     rewrite_questions(sql, quiz["quiz_id"], lambda q: q.update(sources=[SOURCE]))
     items = mistakes(api, token)["items"]
-    assert [i["question"]["sources"] for i in items] == [[SOURCE], [SOURCE]]
+    # 旧数据没有 url / start_seconds 字段，还原后为 null
+    assert [i["question"]["sources"] for i in items] == [[{**SOURCE, "url": None, "start_seconds": None}]] * 2
 
 
 def test_old_mistakes_without_sources_still_listed(api, sql):

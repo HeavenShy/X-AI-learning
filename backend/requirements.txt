@@ -17,6 +17,13 @@ pypdf==6.21.4
 python-docx==1.2.0
 python-multipart==0.0.33
 
+# 网页出题：网页正文提取
+trafilatura==2.0.0
+
+# 视频出题：自带静态 ffmpeg（抽音轨、切段）；B 站链接下载（需要定期升级以跟上站点变化）
+imageio-ffmpeg==0.8.1
+yt-dlp==2026.10.26
+
 # 测试
 pytest==9.2.0
 pytest-asyncio==1.4.1.post1

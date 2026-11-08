@@ -10,14 +10,19 @@ export interface Option {
   text: string
 }
 
-/** 知识库出题的出处快照（资料删除后仍随题目保留） */
+/** 知识库 / 网页出题的出处快照（资料删除后仍随题目保留） */
 export interface QuestionSource {
   document_id: string
+  /** 知识库为文件名，网页为网页标题 */
   document_name: string
-  /** PDF 有页码；Word / TXT / Markdown 为 null */
+  /** PDF 有页码；Word / TXT / Markdown / 网页为 null */
   page: number | null
   /** 不超过 120 字的原文摘录 */
   quote: string
+  /** 网页地址 / B 站视频链接；知识库出题和上传的视频为 null（旧数据没有） */
+  url?: string | null
+  /** 视频出题：出处在视频里的起始秒数；其他来源为 null（旧数据没有） */
+  start_seconds?: number | null
 }
 
 export interface Question {
@@ -33,7 +38,7 @@ export interface Question {
   sources?: QuestionSource[]
 }
 
-export type SourceType = 'text' | 'knowledge_base'
+export type SourceType = 'text' | 'knowledge_base' | 'web' | 'video'
 
 export interface Quiz {
   quiz_id: string
@@ -111,6 +116,24 @@ export const ErrorCode = {
   LIMIT_EXCEEDED: 4022,
   /** 知识库：所选资料都还没准备好 */
   NO_READY_DOCUMENTS: 4023,
+  /** 网页：链接格式不对 / 不是公开网址 */
+  URL_INVALID: 4030,
+  /** 网页：打不开、超时、要登录或拒绝访问 */
+  PAGE_UNREACHABLE: 4031,
+  /** 网页：读不出正文，或 AI 判断没有可学的内容 */
+  PAGE_NO_CONTENT: 4032,
+  /** 网页：不是网页（PDF、图片等）或太大 */
+  PAGE_NOT_SUPPORTED: 4033,
+  /** 视频：文件类型不支持 */
+  VIDEO_TYPE_NOT_SUPPORTED: 4050,
+  /** 视频：超过 200 MB 或 30 分钟 */
+  VIDEO_TOO_LARGE: 4051,
+  /** 视频：不是 B 站链接 / B 站视频读不了 */
+  VIDEO_LINK_INVALID: 4052,
+  /** 视频：还没处理完、处理失败或已过期 */
+  VIDEO_NOT_READY: 4053,
+  /** 视频：所选时间段里没有讲话内容 */
+  VIDEO_RANGE_EMPTY: 4054,
   NOT_FOUND: 4040,
   INTERNAL_ERROR: 5000,
   /** 前端自定义：网络不通 / 超时 */
@@ -335,4 +358,54 @@ export interface TreeTopic {
 export interface KnowledgeTree {
   topic_count: number
   topics: TreeTopic[]
+}
+
+// ---------- 网页出题 ----------
+
+export interface WebPreview {
+  /** 跳转后的最终地址 */
+  url: string
+  site: string
+  title: string
+  char_count: number
+  read_minutes: number
+  via: 'local' | 'tavily'
+}
+
+export interface WebQuizRequest {
+  url: string
+  focus: string
+  question_count: QuestionCount
+  difficulty: DifficultyOption
+}
+
+// ---------- 视频出题 ----------
+
+export type VideoJobStatus = 'processing' | 'ready' | 'failed'
+export type VideoJobStage = 'download' | 'extract' | 'transcribe' | 'done'
+
+export interface VideoJob {
+  job_id: string
+  source: 'upload' | 'bilibili'
+  /** 上传为文件名，B 站为视频标题（取到信息前为“B 站视频”） */
+  title: string
+  url: string | null
+  status: VideoJobStatus
+  stage: VideoJobStage
+  progress_done: number
+  progress_total: number
+  duration_seconds: number
+  /** 文字稿来源：字幕 / 语音识别；还没开始转写为 null */
+  via: 'asr' | 'subtitle' | null
+  char_count: number
+  fail_reason: string | null
+}
+
+export interface VideoQuizRequest {
+  job_id: string
+  focus: string
+  start_seconds?: number
+  end_seconds?: number
+  question_count: QuestionCount
+  difficulty: DifficultyOption
 }

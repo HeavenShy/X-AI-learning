@@ -25,7 +25,13 @@ MSG_NOT_FOUND = "没找到这一话的记录"
 
 
 def source_type_of(questions: list[Question]) -> str:
-    return "knowledge_base" if any(q.sources for q in questions) else "text"
+    """出题响应与历史详情共用：出处带时间点即视频出题，带网址即网页出题，其余带出处即知识库出题，都没有为文本出题。"""
+    sources = [s for q in questions for s in q.sources]
+    if any(s.start_seconds is not None for s in sources):
+        return "video"
+    if any(s.url for s in sources):
+        return "web"
+    return "knowledge_base" if sources else "text"
 
 
 def reward_for(correct_count: int) -> Reward:

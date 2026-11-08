@@ -110,7 +110,12 @@ export function authed<T>(method: Method, path: string, data: unknown, timeout: 
   return withAuth((token) => send<T>({ method, path, data, timeout, token, allowEmpty }))
 }
 
-/** 带登录态的文件上传（multipart，字段名 file） */
-export function authedUpload<T>(path: string, filePath: string, timeout: number): Pending<T> {
-  return withAuth((token) => upload<T>({ path, filePath, name: 'file', timeout, token }))
+/** 带登录态的文件上传（multipart，字段名 file）；extra 可带额外表单字段和进度回调 */
+export function authedUpload<T>(
+  path: string,
+  filePath: string,
+  timeout: number,
+  extra: { formData?: Record<string, string>; onProgress?: (percent: number) => void } = {}
+): Pending<T> {
+  return withAuth((token) => upload<T>({ path, filePath, name: 'file', timeout, token, ...extra }))
 }
